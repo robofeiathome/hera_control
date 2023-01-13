@@ -1,0 +1,6 @@
+KERNEL=="ttyACM*", ATTRS{idVendor}=="15d1",ATTRS{idProduct}=="0000",ATTRS{bMaxPower}=="500mA", SYMLINK+="front_laser"
+KERNEL=="ttyACM*", ATTRS{idVendor}=="15d1",ATTRS{idProduct}=="0000",ATTRS{bMaxPower}=="100mA", SYMLINK+="front_laser"
+KERNEL=="ttyACM*", ATTRS{idVendor}=="fff1",ATTRS{idProduct}=="ff48", SYMLINK+="opencm"
+KERNEL=="ttyACM*", ATTRS{idVendor}=="2341",ATTRS{idProduct}=="0043", SYMLINK+="head"
+KERNEL=="ttyACM*", ATTRS{idVendor}=="2341",ATTRS{idProduct}=="003d", SYMLINK+="base"
+
