@@ -7,7 +7,7 @@ import sys
 from std_msgs.msg import Float32MultiArray, Float32
 from geometry_msgs.msg import Point, Pose
 import moveit_commander
-from hera_control.srv import Head_service
+from hera_control.srv import Head
 from dynamixel_workbench_msgs.srv import DynamixelCommand
 
 

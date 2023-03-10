@@ -15,7 +15,7 @@ from trajectory_msgs.msg import JointTrajectory
 from moveit_msgs.msg import DisplayTrajectory
 from dynamixel_workbench_msgs.srv import DynamixelCommand
 from sensor_msgs.msg import JointState
-from hera_control.srv import Manip3
+from hera_control.srv import Manip
 from hera_control.srv import Manip_poses, Manip_posesResponse
 from std_srvs.srv import Empty as Empty_srv
 from enum import Enum

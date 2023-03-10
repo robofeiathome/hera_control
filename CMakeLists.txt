@@ -17,15 +17,15 @@ include_directories(
 
 add_message_files(
   FILES
-  Manip3_Goal.msg
+  Manip_Goal.msg
   Head_Goal.msg
 )
 
 add_service_files(
   FILES
-  Manip3.srv
+  Manip.srv
   Manip_poses.srv
-  Head_service.srv
+  Head.srv
 )
 
 generate_messages(
