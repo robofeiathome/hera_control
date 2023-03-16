@@ -79,7 +79,7 @@ class Manipulator:
         self.gripper = rospy.ServiceProxy('/dynamixel_controller/dynamixel_command', DynamixelCommand)
         self.clear_octomap = rospy.ServiceProxy('/clear_octomap', Empty_srv)
 
-        rospy.Service('manipulator', Manip3, self.handler)
+        rospy.Service('manipulator', Manip, self.handler)
         rospy.Service('manipulator_poses', Manip_poses, self.pub_poses)
 
         self.tf = tf.TransformListener()
