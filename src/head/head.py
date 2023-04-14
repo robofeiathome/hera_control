@@ -16,7 +16,7 @@ class Head:
     def __init__(self):
         self.goal = Float32()        
 
-        rospy.Service('head_interface', Head, self.handler)
+        rospy.Service('head_service', Head, self.handler)
         self.head = rospy.ServiceProxy('/dynamixel_controller/dynamixel_command', DynamixelCommand)
 	    
         rospy.loginfo('Head ready!')
@@ -48,7 +48,7 @@ class Head:
 
 if __name__ == '__main__':
 
-    rospy.init_node('head_interface', log_level=rospy.INFO)
+    rospy.init_node('head_service', log_level=rospy.INFO)
     Head()
 
     try:
