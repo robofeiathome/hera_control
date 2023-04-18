@@ -23,11 +23,11 @@ class Head:
 	    
         rospy.loginfo('Head ready!')
         self.reset()
-        
-    def reset(self, timeout = 0):
+    
+    def reset(self):
+        success = self.head('', 9, 'Goal_Position', 2048)
+        return success
 
-	    return self.head('', 9, 'Goal_Position', 2320)
-    	
     def handler(self, request):
         type = request.type.lower()
         goal = request.goal
@@ -35,10 +35,7 @@ class Head:
         goal.z = (2048*goal.z)/3.14
 
         if type == '':
-            if goal.z != 0:
-                success = self.head('', 9, 'Goal_Position', int(goal.z))
-            else:
-                rospy.loginfo('Para utilizar 0.0 digite "reset"')
+            success = self.head('', 9, 'Goal_Position', int(goal.z))
 
         elif type == 'reset':
             success = self.reset()
