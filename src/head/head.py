@@ -14,7 +14,7 @@ class Head:
         self.head = rospy.ServiceProxy('/dynamixel_controller/dynamixel_command', DynamixelCommand)
         rospy.loginfo('Head ready!')
         self.reset()
-
+        
     def reset(self):
         success = self.head('', 9, 'Goal_Position', 2048)
         return success
