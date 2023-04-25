@@ -92,58 +92,44 @@ class Manipulator:
         self.execute_pose('home')
         self.open_gripper()
 
-        # Create a dictionary that maps action names to methods
-        self.action_handlers = {
-            reset: self.execute_pose('reset'),
-            home: self.execute_pose('home'),
-            open: self.open_gripper(),
-            half_close: self.half_close_gripper(),
-            close: self.close_gripper(),
-            ready_to_pick: self.ready_to_pick(),
-            attack: self.execute_pose('attack'),
-            giro: self.base_orientation(pose.position.y, pose.position.x),
-            pick: self.pick(),
-            place: self.place(),
-            point: self.point(),
-            point_people: self.point_people(),
-        }
+        def handler(self, request):
 
-        elif type == 'attack':
-            success = self.execute_pose('attack')
-        elif type == 'giro':
-            success = self.base_orientation(pose.position.y, pose.position.x)
-        elif type == 'pick':
+            function_name = request.type.lower()
+            coordinates = request.goal
 
-        elif type == 'place_moveit':
-            success = self.execute_pose('place')
-            rospy.sleep(2)
-            self.open_gripper()
+            quaternion = tf.transformations.quaternion_from_euler(coordinates.rx, coordinates.ry, coordinates.rz)
+            pose = Pose()
+            pose.position.x = coordinates.x
+            pose.position.y = coordinates.y
+            pose.position.z = coordinates.z
+            pose.orientation.x = quaternion[0]
+            pose.orientation.y = quaternion[1]
+            pose.orientation.z = quaternion[2]
+            pose.orientation.w = quaternion[3]
 
-        elif type == 'place':
+            functions = {
+                'reset': lambda: self.execute_pose('reset'),
+                'home': lambda: self.execute_pose('home'),
+                'attack': lambda: self.execute_pose('attack'),
+                'pick': lambda pose: self.pick(pose),
+                'place': lambda: self.place(),
+                'open': lambda: self.open_gripper(),
+                'half_close': lambda: self.half_close_gripper(),
+                'close': lambda: self.close_gripper(),
+                'ready_to_pick': lambda: self.ready_to_pick(),
+                'giro': lambda pose: self.base_orientation(pose.position.y, pose.position.x),
+                'point': lambda pose: self.point(pose.position.x),
+                'point_people': lambda pose: self.point_people(pose),
+                '': lambda pose: self.go_to_coordinates(pose),
+            }
 
-        elif type == 'point':
+            try:
+                result = functions[function_name](*coordinates)
+                return result
+            except KeyError:
+                rospy.logerr('Invalid function name %s' % function_name)
+                return False
 
-        elif type == 'point_people':
-
-        else:
-            self.group.set_pose_target(pose)
-            success = self.execute_plan()
-
-        rospy.Service('manipulator', Manip, self.handler)
-        rospy.Service('manipulator_poses', Manip_poses, self.pub_poses)
-            # ...
-
-        def handler(self, req):
-            action = req.action
-            args = req.args
-            if action not in self.action_handlers:
-                return ManipResponse('Unknown action')
-            handler = self.action_handlers[action]
-            result = handler(*args)
-            return ManipResponse(result)
-
-
-        # ...
 
     def add_box(self,name,pose):
         scene2 = moveit_commander.PlanningSceneInterface(synchronous=True)
@@ -250,6 +236,10 @@ class Manipulator:
         if self.update_start_state.get_num_connections() > 0:
             self.update_start_state.publish()
 
+    def go_to_coordinates(self,pose):
+        self.group.set_pose_target(pose)
+        success = self.execute_plan()
+
     def half_close_gripper(self):
         self.gripper('', 8, 'Goal_Position', Manipulator.LEFT_GRIP_HALF_CLOSED)
         self.gripper('', 7, 'Goal_Position', Manipulator.RIGHT_GRIP_HALF_CLOSED)
@@ -261,7 +251,7 @@ class Manipulator:
         self.gripper('', 7, 'Goal_Position', Manipulator.RIGHT_GRIP_OPENED)
         return True
 
-    def pick(self):
+    def pick(self,pose):
         pose = self.calibrate_position(pose)
         self.clear_octomap()
         self.execute_pose('home')
@@ -315,7 +305,6 @@ class Manipulator:
         self.gripper('', 4, 'Goal_Position', 600)
         self.gripper('', 6, 'Goal_Position', 2200)
         self.gripper('', 1, 'Goal_Position', angle)
-
         return True
 
     def point_people(self, angle):
@@ -355,57 +344,6 @@ class Manipulator:
         else:
             return False
 
-        
-    # def handler(self, request):
-    #     type = request.type.lower()
-    #     goal = request.goal
-    #     quaternion = tf.transformations.quaternion_from_euler(goal.rx, goal.ry, goal.rz)
-    #     pose = Pose()
-    #     pose.position.x = goal.x
-    #     pose.position.y = goal.y
-    #     pose.position.z = goal.z
-    #     pose.orientation.x = quaternion[0]
-    #     pose.orientation.y = quaternion[1]
-    #     pose.orientation.z = quaternion[2]
-    #     pose.orientation.w = quaternion[3]
-    #
-    #     if type == 'reset':
-    #         success = self.execute_pose('reset')
-    #     elif type == 'home':
-    #         success = self.execute_pose('home')
-    #     elif type == 'open':
-    #         success = self.open_gripper()
-    #     elif type == 'half_close':
-    #         success = self.half_close_gripper()
-    #     elif type == 'close':
-    #         success = self.close_gripper()
-    #     elif type == 'ready_to_pick':
-    #         success = self.ready_to_pick()
-    #     elif type == 'attack':
-    #         success = self.execute_pose('attack')
-    #     elif type == 'giro':
-    #         success = self.base_orientation(pose.position.y, pose.position.x)
-    #     elif type == 'pick':
-    #
-    #     elif type == 'place_moveit':
-    #         success = self.execute_pose('place')
-    #         rospy.sleep(2)
-    #         self.open_gripper()
-    #
-    #     elif type == 'place':
-    #
-    #     elif type == 'point':
-    #
-    #     elif type == 'point_people':
-    #
-    #     else:
-    #         self.group.set_pose_target(pose)
-    #         success = self.execute_plan()
-    #
-    #     if success:
-    #         return "succeeded"
-    #     else:
-    #         return "failed"
 
 if __name__ == '__main__':
     moveit_commander.roscpp_initialize(sys.argv)
