@@ -31,30 +31,6 @@ class ManipPoses(Enum):
     ready_to_pick = 7
 
 class Manipulator:
-
-    black_gripper = True 
-
-    if (black_gripper):
-        #id 8
-        LEFT_GRIP_OPENED = 2300
-        LEFT_GRIP_CLOSED = 1850
-        LEFT_GRIP_HALF_CLOSED = 2003
-
-        #id 7
-        RIGHT_GRIP_OPENED = 1800
-        RIGHT_GRIP_CLOSED = 2250
-        RIGHT_GRIP_HALF_CLOSED = 2139
-    else:
-        #id 8
-        LEFT_GRIP_OPENED = 2040
-        LEFT_GRIP_CLOSED = 1499
-        LEFT_GRIP_HALF_CLOSED = 2003
-
-        #id 7
-        RIGHT_GRIP_OPENED = 2067
-        RIGHT_GRIP_CLOSED = 2584
-        RIGHT_GRIP_HALF_CLOSED = 2139
-
     def __init__(self):
 
         # Initialize ROS node and moveit_commander
@@ -86,6 +62,7 @@ class Manipulator:
         self.plan = None
         self.gripper_effort_right = 0.0
         self.gripper_effort_left = 0.0
+        self.define_gripper('black')
 
         rospy.loginfo('Going Home in 2 seconds...')
         rospy.sleep(1)
@@ -112,7 +89,7 @@ class Manipulator:
             'home': lambda pose=None: self.execute_pose('home'),
             'attack': lambda pose=None: self.execute_pose('attack'),
             'pick': lambda pose: self.pick(pose),
-            'place': lambda pose=None: self.place(),
+            'place': lambda pose: self.place(pose),
             'open': lambda pose=None: self.open_gripper(),
             'half_close': lambda pose=None: self.half_close_gripper(),
             'close': lambda pose=None: self.close_gripper(),
@@ -184,6 +161,22 @@ class Manipulator:
             print("nada")
             success = False
         return success
+
+    def define_gripper(self, gripper_color):
+        if (gripper_color == 'black'):
+            LEFT_GRIP_OPENED = 2300
+            LEFT_GRIP_CLOSED = 1850
+            LEFT_GRIP_HALF_CLOSED = 2003
+            RIGHT_GRIP_OPENED = 1800
+            RIGHT_GRIP_CLOSED = 2250
+            RIGHT_GRIP_HALF_CLOSED = 2139
+        elif (gripper_color == 'white'):
+            LEFT_GRIP_OPENED = 2040
+            LEFT_GRIP_CLOSED = 1499
+            LEFT_GRIP_HALF_CLOSED = 2003
+            RIGHT_GRIP_OPENED = 2067
+            RIGHT_GRIP_CLOSED = 2584
+            RIGHT_GRIP_HALF_CLOSED = 2139
 
     def display_planned_path_callback(self, data):
         self.plan = data.trajectory[0].joint_trajectory
@@ -261,9 +254,10 @@ class Manipulator:
         rospy.sleep(1)
         self.execute_pose('attack')
 
-    def place(self):
-        success = self.execute_pose('place')
-        rospy.sleep(2)
+    def place(self,pose):
+        pose = self.calibrate_position(pose)
+        self.group.set_pose_target(pose)
+        success = self.execute_plan()
         if (success):
             rospy.sleep(2)
             self.open_gripper()
