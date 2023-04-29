@@ -6,7 +6,7 @@ import copy
 import math
 import rospy
 import tf
-from tf import transformations 
+from tf import transformations
 import moveit_commander
 import moveit_python
 from std_msgs.msg import Empty
@@ -152,8 +152,8 @@ class Manipulator:
         return pose
 
     def close_gripper(self):
-        self.gripper('', 8, 'Goal_Position', Manipulator.LEFT_GRIP_CLOSED)
-        self.gripper('', 7, 'Goal_Position', Manipulator.RIGHT_GRIP_CLOSED)
+        self.gripper('', 8, 'Goal_Position', self.LEFT_GRIP_CLOSED)
+        self.gripper('', 7, 'Goal_Position', self.RIGHT_GRIP_CLOSED)
         if abs(self.gripper_effort_right) > 1000 or abs(self.gripper_effort_left > 1000):
             print("peguei alguma coisa")
             success = True
@@ -164,19 +164,19 @@ class Manipulator:
 
     def define_gripper(self, gripper_color):
         if (gripper_color == 'black'):
-            LEFT_GRIP_OPENED = 2300
-            LEFT_GRIP_CLOSED = 1850
-            LEFT_GRIP_HALF_CLOSED = 2003
-            RIGHT_GRIP_OPENED = 1800
-            RIGHT_GRIP_CLOSED = 2250
-            RIGHT_GRIP_HALF_CLOSED = 2139
+            self.LEFT_GRIP_OPENED = 2300
+            self.LEFT_GRIP_CLOSED = 1850
+            self.LEFT_GRIP_HALF_CLOSED = 2003
+            self.RIGHT_GRIP_OPENED = 1800
+            self.RIGHT_GRIP_CLOSED = 2250
+            self.RIGHT_GRIP_HALF_CLOSED = 2139
         elif (gripper_color == 'white'):
-            LEFT_GRIP_OPENED = 2040
-            LEFT_GRIP_CLOSED = 1499
-            LEFT_GRIP_HALF_CLOSED = 2003
-            RIGHT_GRIP_OPENED = 2067
-            RIGHT_GRIP_CLOSED = 2584
-            RIGHT_GRIP_HALF_CLOSED = 2139
+            self.LEFT_GRIP_OPENED = 2040
+            self.LEFT_GRIP_CLOSED = 1499
+            self.LEFT_GRIP_HALF_CLOSED = 2003
+            self.RIGHT_GRIP_OPENED = 2067
+            self.RIGHT_GRIP_CLOSED = 2584
+            self.RIGHT_GRIP_HALF_CLOSED = 2139
 
     def display_planned_path_callback(self, data):
         self.plan = data.trajectory[0].joint_trajectory
@@ -220,14 +220,14 @@ class Manipulator:
         return success
 
     def half_close_gripper(self):
-        self.gripper('', 8, 'Goal_Position', Manipulator.LEFT_GRIP_HALF_CLOSED)
-        self.gripper('', 7, 'Goal_Position', Manipulator.RIGHT_GRIP_HALF_CLOSED)
+        self.gripper('', 8, 'Goal_Position', self.LEFT_GRIP_HALF_CLOSED)
+        self.gripper('', 7, 'Goal_Position', self.RIGHT_GRIP_HALF_CLOSED)
         rospy.sleep(5)
         return True
-    
+
     def open_gripper(self):
-        self.gripper('', 8, 'Goal_Position', Manipulator.LEFT_GRIP_OPENED)
-        self.gripper('', 7, 'Goal_Position', Manipulator.RIGHT_GRIP_OPENED)
+        self.gripper('', 8, 'Goal_Position', self.LEFT_GRIP_OPENED)
+        self.gripper('', 7, 'Goal_Position', self.RIGHT_GRIP_OPENED)
         return True
 
     def pick(self,pose):
