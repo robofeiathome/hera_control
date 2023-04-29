@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   tf
+  message_generation
 )
 
 # catkin_python_setup()
@@ -23,9 +24,9 @@ add_message_files(
 
 add_service_files(
   FILES
-  Manip.srv
+  Manip_service.srv
   Manip_poses.srv
-  Head.srv
+  Head_service.srv
 )
 
 generate_messages(

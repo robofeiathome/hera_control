@@ -15,7 +15,7 @@ from trajectory_msgs.msg import JointTrajectory
 from moveit_msgs.msg import DisplayTrajectory
 from dynamixel_workbench_msgs.srv import DynamixelCommand
 from sensor_msgs.msg import JointState
-from hera_control.srv import Manip
+from hera_control.srv import Manip_service
 from hera_control.srv import Manip_poses, Manip_posesResponse
 from std_srvs.srv import Empty as Empty_srv
 from enum import Enum
@@ -32,7 +32,7 @@ class ManipPoses(Enum):
 
 class Manipulator:
 
-    black_gripper = False 
+    black_gripper = True 
 
     if (black_gripper):
         #id 8
@@ -76,7 +76,7 @@ class Manipulator:
         self.gripper = rospy.ServiceProxy('/dynamixel_controller/dynamixel_command', DynamixelCommand)
         self.clear_octomap = rospy.ServiceProxy('/clear_octomap', Empty_srv)
 
-        rospy.Service('manipulator', Manip, self.handler)
+        rospy.Service('manipulator', Manip_service, self.handler)
         rospy.Service('manipulator_poses', Manip_poses, self.pub_poses)
 
         self.tf = tf.TransformListener()
@@ -92,43 +92,43 @@ class Manipulator:
         self.execute_pose('home')
         self.open_gripper()
 
-        def handler(self, request):
+    def handler(self, request):
 
-            function_name = request.type.lower()
-            coordinates = request.goal
+        function_name = request.type.lower()
+        coordinates = request.goal
 
-            quaternion = tf.transformations.quaternion_from_euler(coordinates.rx, coordinates.ry, coordinates.rz)
-            pose = Pose()
-            pose.position.x = coordinates.x
-            pose.position.y = coordinates.y
-            pose.position.z = coordinates.z
-            pose.orientation.x = quaternion[0]
-            pose.orientation.y = quaternion[1]
-            pose.orientation.z = quaternion[2]
-            pose.orientation.w = quaternion[3]
+        quaternion = tf.transformations.quaternion_from_euler(coordinates.rx, coordinates.ry, coordinates.rz)
+        pose = Pose()
+        pose.position.x = coordinates.x
+        pose.position.y = coordinates.y
+        pose.position.z = coordinates.z
+        pose.orientation.x = quaternion[0]
+        pose.orientation.y = quaternion[1]
+        pose.orientation.z = quaternion[2]
+        pose.orientation.w = quaternion[3]
 
-            functions = {
-                'reset': lambda: self.execute_pose('reset'),
-                'home': lambda: self.execute_pose('home'),
-                'attack': lambda: self.execute_pose('attack'),
-                'pick': lambda pose: self.pick(pose),
-                'place': lambda: self.place(),
-                'open': lambda: self.open_gripper(),
-                'half_close': lambda: self.half_close_gripper(),
-                'close': lambda: self.close_gripper(),
-                'ready_to_pick': lambda: self.ready_to_pick(),
-                'giro': lambda pose: self.base_orientation(pose.position.y, pose.position.x),
-                'point': lambda pose: self.point(pose.position.x),
-                'point_people': lambda pose: self.point_people(pose),
-                '': lambda pose: self.go_to_coordinates(pose),
-            }
+        functions = {
+            'reset': lambda pose=None: self.execute_pose('reset'),
+            'home': lambda pose=None: self.execute_pose('home'),
+            'attack': lambda pose=None: self.execute_pose('attack'),
+            'pick': lambda pose: self.pick(pose),
+            'place': lambda pose=None: self.place(),
+            'open': lambda pose=None: self.open_gripper(),
+            'half_close': lambda pose=None: self.half_close_gripper(),
+            'close': lambda pose=None: self.close_gripper(),
+            'ready_to_pick': lambda pose=None: self.ready_to_pick(),
+            'giro': lambda pose: self.base_orientation(pose.position.y, pose.position.x),
+            'point': lambda pose: self.point(pose.position.x),
+            '': lambda pose: self.go_to_coordinates(pose),
+        }
 
-            try:
-                result = functions[function_name](*coordinates)
-                return result
-            except KeyError:
-                rospy.logerr('Invalid function name %s' % function_name)
-                return False
+        try:
+            result = functions[function_name](pose)
+            return str(result)
+        except KeyError:
+            rospy.logerr('Invalid function name %s' % function_name)
+            return "Invalid function name: {}".format(function_name)
+
 
 
     def add_box(self,name,pose):
@@ -198,21 +198,6 @@ class Manipulator:
         self.joint_trajectory.publish(self.plan)
         self.is_moving = False
 
-    def execute_cartesian_plan(self, waypoints, avoid_col=True):
-        plan, fraction = self.group.compute_cartesian_path(waypoints, 0.001, 0, avoid_collisions)
-        rospy.loginfo('Cartesian path fraction: %.2f.' % fraction)
-        rospy.sleep(2)
-        if self.plan != None and fraction > 0.9:
-            self.execute()
-            while self.is_moving:
-                pass
-            rospy.sleep(5)
-            self.plan = None
-            return True
-        else:
-            self.plan = None
-            return False
-
     def execute_plan(self):
         self.group.plan()
         rospy.sleep(2)
@@ -239,6 +224,7 @@ class Manipulator:
     def go_to_coordinates(self,pose):
         self.group.set_pose_target(pose)
         success = self.execute_plan()
+        return success
 
     def half_close_gripper(self):
         self.gripper('', 8, 'Goal_Position', Manipulator.LEFT_GRIP_HALF_CLOSED)
@@ -260,12 +246,6 @@ class Manipulator:
         self.base_orientation(pose.position.y, pose.position.x)
         target_pose = copy.deepcopy(pose)
         self.group.set_pose_target(target_pose)
-        if pose.orientation.z > 0:
-            pose.position.x += 0.05 * math.cos(goal.rz)
-            pose.position.y += 0.05 * math.sin(goal.rz)
-        else:
-            pose.position.x += 0.05 * math.cos(goal.rz)
-            pose.position.y -= 0.05 * math.sin(goal.rz)
         pose.position.z -= 0.15
         pose.position.y -= 0.03
         self.add_box('box', pose)
@@ -306,18 +286,6 @@ class Manipulator:
         self.gripper('', 6, 'Goal_Position', 2200)
         self.gripper('', 1, 'Goal_Position', angle)
         return True
-
-    def point_people(self, angle):
-        angle = 2356 + (-0.96 * pixel)
-        self.close_gripper()
-        if (int(angle) < 1741):
-            angle = 1741
-        elif (int(angle) > 2355):
-            angle = 2355
-        success = self.point(int(angle))
-        rospy.sleep(1)
-        self.gripper('', 2, 'Goal_Position', 2000)
-        self.gripper('', 6, 'Goal_Position', 2800)
 
     def pub_poses(self, request):
         pose_names = [n.name for n in list(ManipPoses)]
