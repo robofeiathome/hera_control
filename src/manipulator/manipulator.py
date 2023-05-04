@@ -62,7 +62,7 @@ class Manipulator:
         self.plan = None
         self.gripper_effort_right = 0.0
         self.gripper_effort_left = 0.0
-        self.define_gripper('black')
+        self.define_gripper('white')
 
         rospy.loginfo('Going Home in 2 seconds...')
         rospy.sleep(1)
@@ -109,12 +109,13 @@ class Manipulator:
 
 
     def add_box(self,name,pose):
+        #pose = self.calibrate_position(pose)
         scene2 = moveit_commander.PlanningSceneInterface(synchronous=True)
         pose_target = PoseStamped() # Create a new pose for the box
         pose_target.header.frame_id = "manip_base_link"
-        pose_target.pose.position.x = pose.position.x + 0.1 #
+        pose_target.pose.position.x = pose.position.x - 0.1
         pose_target.pose.position.y = pose.position.y
-        pose_target.pose.position.z = pose.position.z
+        pose_target.pose.position.z = pose.position.z + 0.5
         pose_target.pose.orientation = pose.orientation
         success = scene2.add_box(name, pose_target, size=(0.1, 0.1, 0.18))
         rospy.sleep(2)
