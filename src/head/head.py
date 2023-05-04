@@ -23,6 +23,9 @@ class Head:
         type = request.type.lower()
         goal = request.goal
 
+        goal.z = 3.14 if goal.z >= 3.14 else goal.z
+        goal.z = 2.0 if goal.z <= 2.0 else goal.z
+
         goal.z = (2048 * goal.z) / 3.14
 
         if type == 'reset':
