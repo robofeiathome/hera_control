@@ -10,7 +10,7 @@ from dynamixel_workbench_msgs.srv import DynamixelCommand
 class Head:
     def __init__(self):
         self.goal = Float32()
-        rospy.Service('head', Head_service, self.handler)
+        rospy.Service('head_interface', Head_service, self.handler)
         self.head = rospy.ServiceProxy('/dynamixel_controller/dynamixel_command', DynamixelCommand)
         rospy.loginfo('Head ready!')
         self.reset()
