@@ -109,15 +109,15 @@ class Manipulator:
 
 
     def add_box(self,name,pose):
-        #pose = self.calibrate_position(pose)
+        print("pose add box", pose)
         scene2 = moveit_commander.PlanningSceneInterface(synchronous=True)
         pose_target = PoseStamped() # Create a new pose for the box
         pose_target.header.frame_id = "manip_base_link"
-        pose_target.pose.position.x = pose.position.x - 0.1
-        pose_target.pose.position.y = pose.position.y
-        pose_target.pose.position.z = pose.position.z + 0.5
+        pose_target.pose.position.x = pose.position.x + 0.1
+        pose_target.pose.position.y = pose.position.y 
+        pose_target.pose.position.z = pose.position.z
         pose_target.pose.orientation = pose.orientation
-        success = scene2.add_box(name, pose_target, size=(0.1, 0.1, 0.18))
+        success = scene2.add_box(name, pose_target, size=(0.08, 0.08, 0.18))
         rospy.sleep(2)
         if success != None:
             return True
@@ -147,9 +147,9 @@ class Manipulator:
         self.gripper('', 1, 'Goal_Position',int(x))
 
     def calibrate_position(self,pose):
-        pose.position.x -= 0.15
-        pose.position.y += 0.12
-        pose.position.z += 0.1
+        pose.position.x -= 0.08
+        pose.position.y += 0.018
+        pose.position.z += 0
         return pose
 
     def close_gripper(self):
@@ -232,28 +232,26 @@ class Manipulator:
         return True
 
     def pick(self,pose):
+        self.gripper('', 9, 'Goal_Position', 1800)
         pose = self.calibrate_position(pose)
-        self.clear_octomap()
         self.execute_pose('home')
         self.open_gripper()
-        self.execute_pose('attack')
+        self.clear_octomap()
         self.base_orientation(pose.position.y, pose.position.x)
         target_pose = copy.deepcopy(pose)
         self.group.set_pose_target(target_pose)
-        pose.position.z -= 0.15
-        pose.position.y -= 0.03
         self.add_box('box', pose)
         rospy.sleep(2)
-        self.clear_octomap()
+        self.gripper('', 9, 'Goal_Position', 2048)
+        rospy.sleep(2)
         self.attach_box('box')
+        rospy.sleep(2)
         success = self.execute_plan()
-        rospy.sleep(4)
+        rospy.sleep(5)
         self.close_gripper()
-        # self.close_gripper()
-        rospy.sleep(1)
         self.remove_box('box')
-        rospy.sleep(1)
         self.execute_pose('attack')
+        return success
 
     def place(self,pose):
         pose = self.calibrate_position(pose)
