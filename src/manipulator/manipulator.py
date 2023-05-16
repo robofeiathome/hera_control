@@ -155,7 +155,8 @@ class Manipulator:
     def close_gripper(self):
         self.gripper('', 8, 'Goal_Position', self.LEFT_GRIP_CLOSED)
         self.gripper('', 7, 'Goal_Position', self.RIGHT_GRIP_CLOSED)
-        if abs(self.gripper_effort_right) > 1000 or abs(self.gripper_effort_left > 1000):
+        rospy.sleep(2)
+        if abs(self.gripper_effort_right) < -200 or abs(self.gripper_effort_left > 200):
             print("peguei alguma coisa")
             success = True
         else:
@@ -246,9 +247,9 @@ class Manipulator:
         rospy.sleep(2)
         self.attach_box('box')
         rospy.sleep(2)
-        success = self.execute_plan()
+        self.execute_plan()
         rospy.sleep(5)
-        self.close_gripper()
+        success = self.close_gripper()
         self.remove_box('box')
         self.execute_pose('attack')
         return success
