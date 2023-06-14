@@ -4,7 +4,16 @@ project(hera_control)
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   rospy
+  roscpp
   std_msgs
+  actionlib
+  actionlib_msgs
+  moveit_msgs
+  moveit_core
+  moveit_ros_planning
+  moveit_ros_planning_interface
+  dynamixel_workbench_msgs
+  dynamixel_workbench_toolbox
   tf
   message_generation
 )
@@ -12,7 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
 # catkin_python_setup()
 
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -36,8 +45,24 @@ generate_messages(
 )
 
 catkin_package(
-  CATKIN_DEPENDS message_runtime std_msgs
+  INCLUDE_DIRS include
+  CATKIN_DEPENDS roscpp std_msgs sensor_msgs geometry_msgs moveit_msgs  moveit_core moveit_ros_planning moveit_ros_planning_interface message_runtime
 )
 
+add_executable(trajectory_server src/manipulator/trajectory_server.cpp)
+add_dependencies(trajectory_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(trajectory_server ${catkin_LIBRARIES} ${Eigen3_LIBRARIES})
+
+install(TARGETS trajectory_server 
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
+
+install(DIRECTORY launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 
