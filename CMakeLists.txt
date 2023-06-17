@@ -46,16 +46,20 @@ generate_messages(
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp std_msgs sensor_msgs geometry_msgs moveit_msgs  moveit_core moveit_ros_planning moveit_ros_planning_interface message_runtime
+  CATKIN_DEPENDS roscpp std_msgs sensor_msgs geometry_msgs moveit_msgs  moveit_core moveit_ros_planning moveit_ros_planning_interface message_runtime dynamixel_workbench_msgs dynamixel_workbench_toolbox
 )
 
-add_executable(trajectory_server src/manipulator/trajectory_server.cpp)
-add_dependencies(trajectory_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(trajectory_server ${catkin_LIBRARIES} ${Eigen3_LIBRARIES})
+#add_executable(trajectory_server src/manipulator/trajectory_server.cpp)
+#add_dependencies(trajectory_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(trajectory_server ${catkin_LIBRARIES} ${Eigen3_LIBRARIES})
 
-install(TARGETS trajectory_server 
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+#add_executable(position_control src/manipulator/position_control.cpp)
+#add_dependencies(position_control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(position_control ${catkin_LIBRARIES})
+
+#install(TARGETS trajectory_server position_control
+#  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+#)
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
