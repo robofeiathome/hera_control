@@ -34,9 +34,9 @@ class Manipulator:
     def __init__(self):
 
         # Initialize ROS node and moveit_commander
-        self.group = moveit_commander.MoveGroupCommander('arm')
-        self.group.set_planning_time(10)
-        self.group.set_pose_reference_frame('manip_base_link')
+        self.arm = moveit_commander.MoveGroupCommander('manipulator')
+        self.arm.set_planning_time(10)
+        self.arm.set_pose_reference_frame('manip_base_link')
         self.hand = moveit_commander.MoveGroupCommander('gripper')
         self.hand.set_planning_time(10)
         self.hand.set_pose_reference_frame('manip_base_link')
@@ -128,9 +128,9 @@ class Manipulator:
         box_name = name
         robot = moveit_commander.RobotCommander()
         scene = moveit_commander.PlanningSceneInterface()
-        eef_link = self.group.get_end_effector_link()
+        eef_link = self.arm.get_end_effector_link()
         grasping_group = "gripper"
-        touch_links = robot.get_link_names(group=grasping_group)
+        touch_links = robot.get_link_names(arm=grasping_group)
         success = scene.attach_box(eef_link, box_name, touch_links=touch_links)
         if success != None:
             return True
@@ -194,7 +194,7 @@ class Manipulator:
         self.is_moving = False
 
     def execute_plan(self):
-        self.group.plan()
+        self.arm.plan()
         rospy.sleep(2)
         if self.plan != None:
             self.execute()
@@ -207,7 +207,7 @@ class Manipulator:
             return False
 
     def execute_pose(self, pose_name):
-        self.group.set_named_target(pose_name)
+        self.arm.set_named_target(pose_name)
         success = self.execute_plan()
         return success
 
@@ -217,7 +217,7 @@ class Manipulator:
             self.update_start_state.publish()
 
     def go_to_coordinates(self,pose):
-        self.group.set_pose_target(pose)
+        self.arm.set_pose_target(pose)
         success = self.execute_plan()
         return success
 
@@ -240,7 +240,7 @@ class Manipulator:
         self.clear_octomap()
         self.base_orientation(pose.position.y, pose.position.x)
         target_pose = copy.deepcopy(pose)
-        self.group.set_pose_target(target_pose)
+        self.arm.set_pose_target(target_pose)
         self.add_box('box', pose)
         rospy.sleep(2)
         self.gripper('', 9, 'Goal_Position', 2048)
@@ -256,7 +256,7 @@ class Manipulator:
 
     def place(self,pose):
         pose = self.calibrate_position(pose)
-        self.group.set_pose_target(pose)
+        self.arm.set_pose_target(pose)
         success = self.execute_plan()
         if (success):
             rospy.sleep(2)
@@ -297,7 +297,7 @@ class Manipulator:
     def remove_box(self,name):
         box_name = name
         scene = moveit_commander.PlanningSceneInterface()
-        eef_link = self.group.get_end_effector_link()
+        eef_link = self.arm.get_end_effector_link()
         obj = moveit_python.PlanningSceneInterface("manip_base_link")
         scene.remove_attached_object(eef_link, name=box_name)
         success = obj.removeCollisionObject(name)
