@@ -28,12 +28,12 @@ wrist_lift_joint:
 gripper_left_joint:
  ID: 7
  Return_Delay_Time: 0
- Profile_Velocity: 50
+ Profile_Velocity: 25
  Current_Limit: 200
 gripper_right_joint:
  ID: 8
  Return_Delay_Time: 0
- Profile_Velocity: 50
+ Profile_Velocity: 25
  Current_Limit: 200
 
 
