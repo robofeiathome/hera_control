@@ -38,3 +38,17 @@ gripper_controller:
     stop_trajectory_duration: 0.5
     state_publish_rate: 25
     action_monitor_rate: 10
+
+zed_controller:
+    type: position_controllers/JointTrajectoryController
+    joints:
+        - joint_torso_to_torso_sensor_plat
+
+    constraints:
+        goal_time: 0.6
+        stopped_velocity_tolerance: 0.05
+        joint_torso_to_torso_sensor_plat: {trajectory: 10, goal: 10}
+
+    stop_trajectory_duration: 0.5
+    state_publish_rate: 25
+    action_monitor_rate: 10

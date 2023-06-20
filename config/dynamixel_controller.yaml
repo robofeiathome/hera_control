@@ -38,10 +38,11 @@ gripper_right_joint:
 
 
 # # Head
-# joint_torso_to_torso_sensor_plat:
-#   ID: 9
-#   Return_Delay_Time: 0
-#   Profile_Velocity: 25
+joint_torso_to_torso_sensor_plat:
+  ID: 9
+  Return_Delay_Time: 0
+  Profile_Velocity: 50
+
 
 
 

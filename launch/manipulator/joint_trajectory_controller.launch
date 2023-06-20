@@ -33,6 +33,7 @@
 
     <node name="manipulator_controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="manipulator_controller"/>
     <node name="gripper_controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="gripper_controller"/>
+    <node name="zed_controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="zed_controller"/>
 
     <!-- startup move_group related -->
     <!-- <include file="$(find open_manipulator_moveit_config)/launch/move_group.launch"/>
