@@ -34,7 +34,6 @@ add_message_files(
 add_service_files(
   FILES
   Manip_service.srv
-  Manip_poses.srv
   Head_service.srv
 )
 
