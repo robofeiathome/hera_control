@@ -2,27 +2,27 @@
 shoulder_pan_joint:
   ID: 1
   Return_Delay_Time: 0
-  Profile_Velocity: 25
+  Profile_Velocity: 50
 shoulder_lift_joint:
   ID: 2
   Return_Delay_Time: 0
-  Profile_Velocity: 25
+  Profile_Velocity: 50
 elbow_pan_joint:
   ID: 3
   Return_Delay_Time: 0
-  Profile_Velocity: 25
+  Profile_Velocity: 50
 elbow_lift_joint:
   ID: 4
   Return_Delay_Time: 0
-  Profile_Velocity: 25
+  Profile_Velocity: 50
 wrist_pan_joint:
   ID: 5
   Return_Delay_Time: 0
-  Profile_Velocity: 25
+  Profile_Velocity: 50
 wrist_lift_joint:
   ID: 6
   Return_Delay_Time: 0
-  Profile_Velocity: 25
+  Profile_Velocity: 50
 
 # Gripper
 gripper_left_joint:
@@ -37,11 +37,12 @@ gripper_right_joint:
  Current_Limit: 200
 
 
-# Head
+# # Head
 joint_torso_to_torso_sensor_plat:
   ID: 9
   Return_Delay_Time: 0
-  Profile_Velocity: 25
+  Profile_Velocity: 50
+
 
 
 
