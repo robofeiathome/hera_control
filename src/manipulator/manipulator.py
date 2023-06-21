@@ -95,7 +95,8 @@ class Manipulator:
             'close': lambda pose=None: self.close_gripper(),
             'ready_to_pick': lambda pose=None: self.ready_to_pick(),
             'giro': lambda pose: self.base_orientation(pose.position.y, pose.position.x),
-            'point': lambda pose: self.point(pose.position.x),
+            'point_rad': lambda pose: self.point_rad(pose.position.x),
+            'point_pixel': lambda pose: self.point_pixel(pose.position.x),
             '': lambda pose: self.go_to_coordinates(pose),
         }
 
@@ -264,8 +265,20 @@ class Manipulator:
             self.execute_pose('attack')
         else:
             return False
+    
+    def point_pixel(self, pixel):
+        self.close_gripper()
+        x = (-(55/96)*pixel) + 2600
+        
+        self.gripper('', 2, 'Goal_Position', 1450)
+        self.gripper('', 3, 'Goal_Position', 2048)
+        self.gripper('', 5, 'Goal_Position', 2048)
+        self.gripper('', 4, 'Goal_Position', 600)
+        self.gripper('', 6, 'Goal_Position', 2200)
+        self.gripper('', 1, 'Goal_Position', int(x))
+        return True
 
-    def point(self,angle):
+    def point_rad(self,angle):
         self.close_gripper()
         angle = (2048 * angle) / 1
         if (angle < 1024):
@@ -279,7 +292,7 @@ class Manipulator:
         self.gripper('', 4, 'Goal_Position', 600)
         self.gripper('', 6, 'Goal_Position', 2200)
         self.gripper('', 1, 'Goal_Position', angle)
-        return True
+        return True    
 
     def pub_poses(self, request):
         pose_names = [n.name for n in list(ManipPoses)]
