@@ -52,6 +52,7 @@ class Manipulator:
             'open': lambda pose=None: self.execute_pose(self.hand,'open'),
             'close': lambda pose=None: self.execute_pose(self.hand,'close'),
             'pick': lambda pose: self.pick(pose),
+            'place': lambda pose: self.place(pose),
             'cartesian_path': lambda pose: self.cartesian_path(pose),
             '': lambda pose: self.go_to_coordinates(pose),
         }
@@ -147,6 +148,19 @@ class Manipulator:
             self.execute_pose(self.hand,'close')
             self.execute_pose(self.arm,'attack')
         return success
+    
+    def place(self,pose):
+        pose.position.x -= 0.15
+        target_pose = copy.deepcopy(pose)
+        self.arm.set_pose_target(target_pose)
+        success = self.arm.go(wait=True)
+        if success:
+            self.detach_box()
+            self.remove_box()
+            self.execute_pose(self.hand,'open')
+            self.execute_pose(self.arm,'home')
+        return success
+
 
     def remove_box(self, timeout=4):
         box_name = self.box_name
