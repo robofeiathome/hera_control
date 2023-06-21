@@ -6,7 +6,7 @@
   <arg name="use_joint_state"         default="true"/>
   <arg name="use_cmd_vel"             default="false"/>
 
-  <param name="dynamixel_info" value="$(find hera_control)/config/manipulator/dynamixel_controller.yaml"/>
+  <param name="dynamixel_info" value="$(find hera_control)/config/dynamixel_controller.yaml"/>
 
   <node name="dynamixel_controller" pkg="dynamixel_workbench_controllers" type="dynamixel_workbench_controllers"
         output="screen" args="$(arg usb_port) $(arg dxl_baud_rate)">

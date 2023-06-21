@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   tf
+  message_generation
 )
 
 # catkin_python_setup()
@@ -17,13 +18,13 @@ include_directories(
 
 add_message_files(
   FILES
-  Manip3_Goal.msg
+  Manip_Goal.msg
   Head_Goal.msg
 )
 
 add_service_files(
   FILES
-  Manip3.srv
+  Manip_service.srv
   Manip_poses.srv
   Head_service.srv
 )
