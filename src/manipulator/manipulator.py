@@ -2,14 +2,13 @@
 
 import sys
 import copy
-import math
 import rospy
 import tf
 import moveit_commander
 import moveit_msgs.msg
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
-from std_msgs.msg import Float32, String
 from hera_control.srv import Manip_service
+from std_srvs.srv import Empty as Empty_srv
 
 
 class Manipulator:
@@ -25,6 +24,7 @@ class Manipulator:
         self.hand.set_max_acceleration_scaling_factor(1.0)
         self.hand.set_max_velocity_scaling_factor(1.0)
 
+        self.clear_octomap = rospy.ServiceProxy('/clear_octomap', Empty_srv)
         self.display_trajectory_publisher = rospy.Publisher("/move_group_arm/display_planned_path", moveit_msgs.msg.DisplayTrajectory, queue_size=20)  
         
         rospy.Service('manipulator', Manip_service, self.handler)
@@ -72,9 +72,8 @@ class Manipulator:
         box_pose = PoseStamped()
         box_pose.pose = pose
         box_pose.header.frame_id = "manip_base_link"
-        box_pose.pose.orientation.w = 1.0
         box_name = "box"
-        scene.add_box(box_name, box_pose, size=(0.05, 0.05, 0.1))
+        scene.add_box(box_name, box_pose, size=(0.05, 0.05, 0.15))
         return self.wait_for_state_update(box_is_known=True, timeout=4)
     
     def attach_box(self):
@@ -87,42 +86,12 @@ class Manipulator:
         scene.attach_box(eef_link, box_name, touch_links=touch_links)
         return self.wait_for_state_update(box_is_attached=True, box_is_known=False, timeout=4)
 
-    def calibrate_position(self,pose):
-        pose.position.x -= 0.08
-        pose.position.y += 0.018
-        pose.position.z += 0
-        return pose
-
-    def cartesian_path(self, pose):
-        waypoints = []
-
-        wpose = self.arm.get_current_pose().pose
-        wpose.position.z += 0.1  # First move up (z)
-        wpose.position.y += 0.05  # and sideways (y)
-        waypoints.append(copy.deepcopy(wpose))
-
-        wpose.position.x += 0.1  # Second move forward in (x)
-        waypoints.append(copy.deepcopy(wpose))
-
-        wpose.position.y -= 0.05  # Third move sideways (y)
-        waypoints.append(copy.deepcopy(wpose))
-        print(waypoints)
-        (plan, fraction) = self.arm.compute_cartesian_path(waypoints, 0.05, 0.0) 
-        self.arm.execute(plan, wait=True)
-        return True
-
     def detach_box(self):
         box_name = self.box_name
         scene = self.scene
         eef_link = self.eef_link
         scene.remove_attached_object(eef_link, name=box_name)
         return self.wait_for_state_update(box_is_known=True, box_is_attached=False, timeout=4)
-
-    def __display_plan(self, plan):
-        self.display_trajectory = DisplayTrajectory()
-        self.display_trajectory.trajectory_start = self.robot.get_current_state()
-        self.display_trajectory.trajectory.append(plan)
-        self.display_trajectory_publisher.publish(self.display_trajectory)
 
     def execute_pose(self, group, pose_name):
         group.set_named_target(pose_name)
@@ -138,19 +107,25 @@ class Manipulator:
 
     def pick(self,pose):
         self.execute_pose(self.arm,'home')
+        self.execute_pose(self.hand,'open')
+        self.clear_octomap()
         self.add_box(pose)
-        pose.position.x -= 0.15
+        pose.position.x -= 0.13
+        rospy.sleep(2)
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
         success = self.arm.go(wait=True)
         if success:
             self.attach_box()
             self.execute_pose(self.hand,'close')
-            self.execute_pose(self.arm,'attack')
+            self.execute_pose(self.arm,'hold')
         return success
     
     def place(self,pose):
+        self.execute_pose(self.arm,'hold')
         pose.position.x -= 0.15
+        rospy.sleep(2)
+        self.clear_octomap()
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
         success = self.arm.go(wait=True)
