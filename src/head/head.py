@@ -17,6 +17,8 @@ class Head:
         self.head = moveit_commander.MoveGroupCommander('zed')
         self.head.set_max_acceleration_scaling_factor(1.0)
         self.head.set_max_velocity_scaling_factor(1.0)
+    
+        self.execute_pose('up')
 
     def handler(self, request,):
         function_name = request.type.lower()
