@@ -73,7 +73,7 @@ class Manipulator:
         box_pose.pose = pose
         box_pose.header.frame_id = "manip_base_link"
         box_name = "box"
-        scene.add_box(box_name, box_pose, size=(0.05, 0.05, 0.15))
+        scene.add_box(box_name, box_pose, size=(0.075, 0.075, 0.2))
         return self.wait_for_state_update(box_is_known=True, timeout=4)
     
     def attach_box(self):
