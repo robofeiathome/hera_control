@@ -291,7 +291,7 @@ class Manipulator:
         self.gripper('', 5, 'Goal_Position', 2048)
         self.gripper('', 4, 'Goal_Position', 600)
         self.gripper('', 6, 'Goal_Position', 2200)
-        self.gripper('', 1, 'Goal_Position', angle)
+        self.gripper('', 1, 'Goal_Position', int(angle))
         return True    
 
     def pub_poses(self, request):
