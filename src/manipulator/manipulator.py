@@ -42,8 +42,14 @@ class Manipulator:
         function_name = request.type.lower()
         coordinates = request.goal
 
-        quaternion = tf.transformations.quaternion_from_euler(coordinates.rx, coordinates.ry, coordinates.rz)
-        pose = Pose(position=Point(coordinates.x, coordinates.y, coordinates.z), orientation=Quaternion(quaternion[0], quaternion[1], quaternion[2], quaternion[3]))
+        #quaternion = tf.transformations.quaternion_from_euler(coordinates.rx, coordinates.ry, coordinates.rz)
+        #pose = Pose(position=Point(coordinates.x, coordinates.y, coordinates.z), orientation=Quaternion(quaternion[0], quaternion[1], quaternion[2], quaternion[3]))
+        pose = Pose()
+        pose.position.x = coordinates.x
+        pose.position.y = coordinates.y
+        pose.position.z = coordinates.z
+        pose.orientation.w = 1.0
+
 
         functions = {
             'reset': lambda pose=None: self.execute_pose(self.arm,'reset'),
@@ -96,14 +102,24 @@ class Manipulator:
     def execute_pose(self, group, pose_name):
         group.set_named_target(pose_name)
         success = group.go(wait=True)
-        return success
-
-    def go_to_coordinates(self, pose):
-        self.arm.set_pose_target(pose)
-        success = self.arm.go(wait=True)
         self.arm.stop()
         self.arm.clear_pose_targets()
         return success
+
+    def go_to_coordinates(self, pose):
+        target_pose = copy.deepcopy(pose)
+        self.arm.set_pose_target(pose)
+        plan = self.arm.plan()
+        execution = self.arm.execute(plan[1], wait = True)
+        nbrRetry = 0
+        while (not plan[1].joint_trajectory.points or not execution) and nbrRetry < 4:
+            target_pose = copy.deepcopy(pose)
+            self.arm.set_pose_target(target_pose)
+            plan = self.arm.plan()
+            execution = self.arm.execute(plan[1], wait = True)
+            nbrRetry += 1
+            self.execute_pose(self.arm,'reset') if nbrRetry%2==0 else self.execute_pose(self.arm,'attack')
+        return execution
 
     def pick(self,pose):
         self.execute_pose(self.arm,'home')
@@ -112,14 +128,12 @@ class Manipulator:
         self.add_box(pose)
         pose.position.x -= 0.13
         rospy.sleep(2)
-        target_pose = copy.deepcopy(pose)
-        self.arm.set_pose_target(target_pose)
-        success = self.arm.go(wait=True)
-        if success:
+        execution = self.go_to_coordinates(pose)
+        if execution:
             self.attach_box()
             self.execute_pose(self.hand,'close')
             self.execute_pose(self.arm,'hold')
-        return success
+        return execution
     
     def place(self,pose):
         self.execute_pose(self.arm,'hold')
