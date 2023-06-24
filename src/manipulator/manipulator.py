@@ -6,9 +6,11 @@ import rospy
 import tf
 import moveit_commander
 import moveit_msgs.msg
+from moveit_msgs.msg import CollisionObject, AttachedCollisionObject
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 from hera_control.srv import Manip_service
 from std_srvs.srv import Empty as Empty_srv
+from shape_msgs.msg import MeshTriangle, Mesh, SolidPrimitive, Plane
 
 
 class Manipulator:
@@ -23,10 +25,20 @@ class Manipulator:
         self.hand = moveit_commander.MoveGroupCommander('gripper')
         self.hand.set_max_acceleration_scaling_factor(1.0)
         self.hand.set_max_velocity_scaling_factor(1.0)
+        self.head = moveit_commander.MoveGroupCommander("zed")
+        self.head.set_max_acceleration_scaling_factor(1.0)
+        self.head.set_max_velocity_scaling_factor(1.0)
+
+        self._objects = dict()
+
 
         self.clear_octomap = rospy.ServiceProxy('/clear_octomap', Empty_srv)
         self.display_trajectory_publisher = rospy.Publisher("/move_group_arm/display_planned_path", moveit_msgs.msg.DisplayTrajectory, queue_size=20)  
-        
+        self._pub = rospy.Publisher('collision_object',
+                                        CollisionObject,
+                                        queue_size=10)
+
+
         rospy.Service('manipulator', Manip_service, self.handler)
         self.tf = tf.TransformListener()
         self.tf.waitForTransform('manip_base_link', 'torso', rospy.Time(), rospy.Duration(1.0))
@@ -40,15 +52,15 @@ class Manipulator:
 
     def handler(self, request):
         function_name = request.type.lower()
-        coordinates = request.goal
+        self.coordinates = request.goal
 
-        #quaternion = tf.transformations.quaternion_from_euler(coordinates.rx, coordinates.ry, coordinates.rz)
-        #pose = Pose(position=Point(coordinates.x, coordinates.y, coordinates.z), orientation=Quaternion(quaternion[0], quaternion[1], quaternion[2], quaternion[3]))
-        pose = Pose()
-        pose.position.x = coordinates.x
-        pose.position.y = coordinates.y
-        pose.position.z = coordinates.z
-        pose.orientation.w = 1.0
+        
+        quaternion = tf.transformations.quaternion_from_euler(self.coordinates.rx, self.coordinates.ry, self.coordinates.rz)
+        quaternion[0] = 0.0
+        quaternion[1] = 0.0
+        quaternion[2] = 0.0
+        quaternion[3] = 1.0
+        pose = Pose(position=Point(self.coordinates.x, self.coordinates.y, self.coordinates.z), orientation=Quaternion(quaternion[0], quaternion[1], quaternion[2], quaternion[3]))
 
 
         functions = {
@@ -57,6 +69,8 @@ class Manipulator:
             'attack': lambda pose=None: self.execute_pose(self.arm,'attack'),
             'open': lambda pose=None: self.execute_pose(self.hand,'open'),
             'close': lambda pose=None: self.execute_pose(self.hand,'close'),
+            'up': lambda pose=None: self.execute_pose(self.head,'up'),
+            'down': lambda pose=None: self.execute_pose(self.head,'down'),
             'pick': lambda pose: self.pick(pose),
             'place': lambda pose: self.place(pose),
             'cartesian_path': lambda pose: self.cartesian_path(pose),
@@ -79,8 +93,38 @@ class Manipulator:
         box_pose.pose = pose
         box_pose.header.frame_id = "manip_base_link"
         box_name = "box"
-        scene.add_box(box_name, box_pose, size=(0.075, 0.075, 0.2))
+        scene.add_box(box_name, box_pose, size=(0.05, 0.05, 0.15))
         return self.wait_for_state_update(box_is_known=True, timeout=4)
+    
+    def makeSolidPrimitive(self, name, solid, pose):
+        o = CollisionObject()
+        o.header.stamp = rospy.Time.now()
+        o.header.frame_id = "manip_base_link"
+        o.id = name
+        o.primitives.append(solid)
+        o.primitive_poses.append(pose)
+        o.operation = o.ADD
+        return o
+    
+    
+    def addSolidPrimitive(self, name, solid, pose):
+        o = self.makeSolidPrimitive(name, solid, pose)
+        self._objects[name] = o
+        self._pub.publish(o)
+ 
+    def addCylinder(self, name, height, radius, x, y, z, wait=True):
+        s = SolidPrimitive()
+        s.dimensions = [height, radius]
+        s.type = s.CYLINDER
+
+        ps = PoseStamped()
+        ps.header.frame_id = "manip_base_link"
+        ps.pose.position.x = x
+        ps.pose.position.y = y
+        ps.pose.position.z = z
+        ps.pose.orientation.w = 1.0
+
+        self.addSolidPrimitive(name, s, ps.pose, wait)
     
     def attach_box(self):
         box_name = self.box_name
@@ -102,42 +146,36 @@ class Manipulator:
     def execute_pose(self, group, pose_name):
         group.set_named_target(pose_name)
         success = group.go(wait=True)
+        return success
+
+    def go_to_coordinates(self, pose):
+        self.arm.set_pose_target(pose)
+        success = self.arm.go(wait=True)
         self.arm.stop()
         self.arm.clear_pose_targets()
         return success
 
-    def go_to_coordinates(self, pose):
-        target_pose = copy.deepcopy(pose)
-        self.arm.set_pose_target(pose)
-        plan = self.arm.plan()
-        execution = self.arm.execute(plan[1], wait = True)
-        nbrRetry = 0
-        while (not plan[1].joint_trajectory.points or not execution) and nbrRetry < 4:
-            target_pose = copy.deepcopy(pose)
-            self.arm.set_pose_target(target_pose)
-            plan = self.arm.plan()
-            execution = self.arm.execute(plan[1], wait = True)
-            nbrRetry += 1
-            self.execute_pose(self.arm,'reset') if nbrRetry%2==0 else self.execute_pose(self.arm,'attack')
-        return execution
-
     def pick(self,pose):
-        self.execute_pose(self.arm,'home')
         self.execute_pose(self.hand,'open')
         self.clear_octomap()
-        self.add_box(pose)
-        pose.position.x -= 0.13
+        self.addCylinder(self.box_name, 0.15, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
         rospy.sleep(2)
-        execution = self.go_to_coordinates(pose)
-        if execution:
+        self.execute_pose(self.head, "up")
+        pose.position.x -= 0.13
+        target_pose = copy.deepcopy(pose)
+        self.arm.set_pose_target(target_pose)
+        success = self.arm.go(wait=True)
+        if success:
             self.attach_box()
             self.execute_pose(self.hand,'close')
+            self.execute_pose(self.arm,'attack')
             self.execute_pose(self.arm,'hold')
-        return execution
+        return success
     
     def place(self,pose):
         self.execute_pose(self.arm,'hold')
         pose.position.x -= 0.15
+        pose.position.z += 0.1
         rospy.sleep(2)
         self.clear_octomap()
         target_pose = copy.deepcopy(pose)
