@@ -8,7 +8,7 @@ import moveit_commander
 import moveit_msgs.msg
 from moveit_msgs.msg import CollisionObject, AttachedCollisionObject
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
-from hera_control.srv import Manip_service
+from hera_control.srv import Manip_service, Joint_service
 from std_srvs.srv import Empty as Empty_srv
 from shape_msgs.msg import MeshTriangle, Mesh, SolidPrimitive, Plane
 
@@ -28,18 +28,18 @@ class Manipulator:
         self.head = moveit_commander.MoveGroupCommander("zed")
         self.head.set_max_acceleration_scaling_factor(1.0)
         self.head.set_max_velocity_scaling_factor(1.0)
+        self.motors = moveit_commander.MoveGroupCommander("all_motors")
 
         self._objects = dict()
 
 
         self.clear_octomap = rospy.ServiceProxy('/clear_octomap', Empty_srv)
         self.display_trajectory_publisher = rospy.Publisher("/move_group_arm/display_planned_path", moveit_msgs.msg.DisplayTrajectory, queue_size=20)  
-        self._pub = rospy.Publisher('collision_object',
-                                        CollisionObject,
-                                        queue_size=10)
+        self._pub = rospy.Publisher('collision_object',CollisionObject,queue_size=10)
 
 
         rospy.Service('manipulator', Manip_service, self.handler)
+        rospy.Service('joint_command', Joint_service, self.joints_handler)
         self.tf = tf.TransformListener()
         self.tf.waitForTransform('manip_base_link', 'torso', rospy.Time(), rospy.Duration(1.0))
 
@@ -56,11 +56,7 @@ class Manipulator:
 
         
         quaternion = tf.transformations.quaternion_from_euler(self.coordinates.rx, self.coordinates.ry, self.coordinates.rz)
-        quaternion[0] = 0.0
-        quaternion[1] = 0.0
-        quaternion[2] = 0.0
-        quaternion[3] = 1.0
-        pose = Pose(position=Point(self.coordinates.x, self.coordinates.y, self.coordinates.z), orientation=Quaternion(quaternion[0], quaternion[1], quaternion[2], quaternion[3]))
+        pose = Pose(position=Point(self.coordinates.x, self.coordinates.y, self.coordinates.z), orientation=Quaternion(0.0,0.0,0.0,1.0))
 
 
         functions = {
@@ -69,8 +65,8 @@ class Manipulator:
             'attack': lambda pose=None: self.execute_pose(self.arm,'attack'),
             'open': lambda pose=None: self.execute_pose(self.hand,'open'),
             'close': lambda pose=None: self.execute_pose(self.hand,'close'),
-            'up': lambda pose=None: self.execute_pose(self.head,'up'),
-            'down': lambda pose=None: self.execute_pose(self.head,'down'),
+            'head_up': lambda pose=None: self.execute_pose(self.head,'head_up'),
+            'head_down': lambda pose=None: self.execute_pose(self.head,'head_down'),
             'pick': lambda pose: self.pick(pose),
             'place': lambda pose: self.place(pose),
             'cartesian_path': lambda pose: self.cartesian_path(pose),
@@ -84,7 +80,25 @@ class Manipulator:
         except KeyError:
             rospy.logerr('Invalid function name %s' % function_name)
             return "Invalid function name: {}".format(function_name)
+        
+    def joints_handler(self, request):
+        function_name = request.type.lower()
+        id = request.goal.id
+        position = request.goal.x
 
+        functions = {
+            '': lambda id, position: self.move_joint(id, position),
+            'point_rad': lambda position: self.point_rad(position),
+            'point_pixel': lambda position: self.point_pixel(position),
+        }
+
+        try:
+            result = functions[function_name](position)
+            return result
+
+        except KeyError:
+            rospy.logerr('Invalid function name %s' % function_name)
+            return "Invalid function name: {}".format(function_name)
 
     def add_box(self,pose):
         box_name = self.box_name
@@ -105,7 +119,6 @@ class Manipulator:
         o.primitive_poses.append(pose)
         o.operation = o.ADD
         return o
-    
     
     def addSolidPrimitive(self, name, solid, pose):
         o = self.makeSolidPrimitive(name, solid, pose)
@@ -155,12 +168,20 @@ class Manipulator:
         self.arm.clear_pose_targets()
         return success
 
+    def move_joint(self,id,position):
+        values = self.motors.get_current_joint_values()
+        id = 0 if id == 9 else id
+        values[id] = position
+        self.motors.set_joint_value_target(values)
+        success = self.motors.go(wait=True)
+        return success
+
     def pick(self,pose):
         self.execute_pose(self.hand,'open')
         self.clear_octomap()
         self.addCylinder(self.box_name, 0.15, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
         rospy.sleep(2)
-        self.execute_pose(self.head, "up")
+        self.execute_pose(self.head, 'head_up')
         pose.position.x -= 0.13
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
@@ -187,7 +208,19 @@ class Manipulator:
             self.execute_pose(self.hand,'open')
             self.execute_pose(self.arm,'home')
         return success
+    
+    def point_pixel(self, position):
+        self.execute_pose(self.hand, 'close')
+        self.execute_pose(self.arm, 'point')
+        x = (-(55/96)*pixel) + 2600 #precisa refazer o calculo
+        self.move_joint(1, pixel)
+        return True
 
+    def point_rad(self,angle):
+        self.execute_pose(self.hand, 'close')
+        self.execute_pose(self.arm, 'point')
+        self.move_joint(1, angle)
+        return True    
 
     def remove_box(self, timeout=4):
         box_name = self.box_name
