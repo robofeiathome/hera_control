@@ -28,13 +28,13 @@ include_directories(
 add_message_files(
   FILES
   Manip_Goal.msg
-  Head_Goal.msg
+  Joint_Goal.msg
 )
 
 add_service_files(
   FILES
   Manip_service.srv
-  Head_service.srv
+  Joint_service.srv
 )
 
 generate_messages(
