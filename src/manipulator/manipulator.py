@@ -67,6 +67,7 @@ class Manipulator:
             'close': lambda pose=None: self.execute_pose(self.hand,'close'),
             'head_up': lambda pose=None: self.execute_pose(self.head,'head_up'),
             'head_down': lambda pose=None: self.execute_pose(self.head,'head_down'),
+            'sg_place_1': lambda pose=None: self.execute_pose(self.arm, 'place'),
             'pick': lambda pose: self.pick(pose),
             'place': lambda pose: self.place(pose),
             'cartesian_path': lambda pose: self.cartesian_path(pose),
@@ -125,7 +126,7 @@ class Manipulator:
         self._objects[name] = o
         self._pub.publish(o)
  
-    def addCylinder(self, name, height, radius, x, y, z, wait=True):
+    def addCylinder(self, name, height, radius, x, y, z):
         s = SolidPrimitive()
         s.dimensions = [height, radius]
         s.type = s.CYLINDER
@@ -137,7 +138,7 @@ class Manipulator:
         ps.pose.position.z = z
         ps.pose.orientation.w = 1.0
 
-        self.addSolidPrimitive(name, s, ps.pose, wait)
+        self.addSolidPrimitive(name, s, ps.pose)
     
     def attach_box(self):
         box_name = self.box_name
