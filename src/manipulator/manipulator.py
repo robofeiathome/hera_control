@@ -29,6 +29,8 @@ class Manipulator:
         self.head.set_max_acceleration_scaling_factor(1.0)
         self.head.set_max_velocity_scaling_factor(1.0)
         self.motors = moveit_commander.MoveGroupCommander("all_motors")
+        self.motors.set_max_acceleration_scaling_factor(1.0)
+        self.motors.set_max_velocity_scaling_factor(1.0)
 
         self._objects = dict()
 
@@ -45,6 +47,7 @@ class Manipulator:
 
         self.execute_pose(self.arm,'home')
         self.execute_pose(self.hand,'open')
+        self.execute_pose(self.head,'up')
  
 
         self.box_name = "box"
@@ -65,8 +68,8 @@ class Manipulator:
             'attack': lambda pose=None: self.execute_pose(self.arm,'attack'),
             'open': lambda pose=None: self.execute_pose(self.hand,'open'),
             'close': lambda pose=None: self.execute_pose(self.hand,'close'),
-            'head_up': lambda pose=None: self.execute_pose(self.head,'head_up'),
-            'head_down': lambda pose=None: self.execute_pose(self.head,'head_down'),
+            'head_up': lambda pose=None: self.execute_pose(self.head,'up'),
+            'head_down': lambda pose=None: self.execute_pose(self.head,'down'),
             'sg_place_1': lambda pose=None: self.execute_pose(self.arm, 'place'),
             'pick': lambda pose: self.pick(pose),
             'place': lambda pose: self.place(pose),
@@ -89,13 +92,13 @@ class Manipulator:
 
         functions = {
             '': lambda id, position: self.move_joint(id, position),
-            'point_rad': lambda position: self.point_rad(position),
-            'point_pixel': lambda position: self.point_pixel(position),
+            'point_rad': lambda id,position: self.point_rad(position),
+            'point_pixel': lambda id,position: self.point_pixel(position),
         }
 
         try:
-            result = functions[function_name](position)
-            return result
+            result = functions[function_name](id,position)
+            return str(result)
 
         except KeyError:
             rospy.logerr('Invalid function name %s' % function_name)
