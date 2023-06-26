@@ -213,11 +213,11 @@ class Manipulator:
             self.execute_pose(self.arm,'home')
         return success
     
-    def point_pixel(self, position):
+    def point_pixel(self, pixel):
         self.execute_pose(self.hand, 'close')
         self.execute_pose(self.arm, 'point')
-        x = (-(55/96)*pixel) + 2600 #precisa refazer o calculo
-        self.move_joint(1, pixel)
+        x = ((-1.55/1080)*pixel) + 0.775
+        self.move_joint(1, x)
         return True
 
     def point_rad(self,angle):
