@@ -46,7 +46,6 @@ class Manipulator:
         self.tf.waitForTransform('manip_base_link', 'torso', rospy.Time(), rospy.Duration(1.0))
 
         self.execute_pose(self.arm,'home')
-        self.execute_pose(self.hand,'open')
         self.execute_pose(self.head,'up')
  
 
@@ -214,14 +213,12 @@ class Manipulator:
         return success
     
     def point_pixel(self, pixel):
-        self.execute_pose(self.hand, 'close')
         self.execute_pose(self.arm, 'point')
         x = ((-1.55/1080)*pixel) + 0.775
         self.move_joint(1, x)
         return True
 
     def point_rad(self,angle):
-        self.execute_pose(self.hand, 'close')
         self.execute_pose(self.arm, 'point')
         self.move_joint(1, angle)
         return True    
