@@ -69,6 +69,7 @@ class Manipulator:
             'close': lambda pose=None: self.execute_pose(self.hand,'close'),
             'head_up': lambda pose=None: self.execute_pose(self.head,'up'),
             'head_down': lambda pose=None: self.execute_pose(self.head,'down'),
+            'hold_left': lambda pose=None: self.execute_pose(self.arm, 'hold_left'),
             'sg_place_1': lambda pose=None: self.execute_pose(self.arm, 'place'),
             'pick': lambda pose: self.pick(pose),
             'place': lambda pose: self.place(pose),
@@ -214,7 +215,7 @@ class Manipulator:
     
     def point_pixel(self, pixel):
         self.execute_pose(self.arm, 'point')
-        x = ((-1.55/1080)*pixel) + 0.775
+        x = ((-1.55/1920)*pixel) + 0.775
         self.move_joint(1, x)
         return True
 
