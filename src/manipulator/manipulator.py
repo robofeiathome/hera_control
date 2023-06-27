@@ -70,9 +70,8 @@ class Manipulator:
             'head_up': lambda pose=None: self.execute_pose(self.head,'up'),
             'head_down': lambda pose=None: self.execute_pose(self.head,'down'),
             'hold_left': lambda pose=None: self.execute_pose(self.arm, 'hold_left'),
-            'sg_place_1': lambda pose=None: self.execute_pose(self.arm, 'place'),
             'pick': lambda pose: self.pick(pose),
-            'place': lambda pose: self.place(pose),
+            'place': lambda pose=None: self.place(),
             'cartesian_path': lambda pose: self.cartesian_path(pose),
             '': lambda pose: self.go_to_coordinates(pose),
         }
@@ -175,6 +174,8 @@ class Manipulator:
     def move_joint(self,id,position):
         values = self.motors.get_current_joint_values()
         id = 0 if id == 9 else id
+        position = 0 if id == 0 and position >= 0.0 else position
+        position = -1.5 if id == 0 and position <= -1.5 else position
         values[id] = position
         self.motors.set_joint_value_target(values)
         success = self.motors.go(wait=True)
@@ -185,7 +186,7 @@ class Manipulator:
         self.clear_octomap()
         self.addCylinder(self.box_name, 0.15, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
         rospy.sleep(2)
-        self.execute_pose(self.head, 'head_up')
+        self.execute_pose(self.head, 'up')
         pose.position.x -= 0.13
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
@@ -197,19 +198,14 @@ class Manipulator:
             self.execute_pose(self.arm,'hold')
         return success
     
-    def place(self,pose):
-        self.execute_pose(self.arm,'hold')
-        pose.position.x -= 0.15
-        pose.position.z += 0.1
-        rospy.sleep(2)
+    def place(self):
         self.clear_octomap()
-        target_pose = copy.deepcopy(pose)
-        self.arm.set_pose_target(target_pose)
-        success = self.arm.go(wait=True)
+        success = self.execute_pose(self.arm,'place')
         if success:
             self.detach_box()
             self.remove_box()
             self.execute_pose(self.hand,'open')
+            self.execute_pose(self.arm,'attack')
             self.execute_pose(self.arm,'home')
         return success
     
