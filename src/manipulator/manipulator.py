@@ -46,6 +46,7 @@ class Manipulator:
         self.tf.waitForTransform('manip_base_link', 'torso', rospy.Time(), rospy.Duration(1.0))
 
         self.execute_pose(self.arm,'home')
+        self.execute_pose(self.hand,'open')
         self.execute_pose(self.head,'up')
  
 
@@ -65,10 +66,17 @@ class Manipulator:
             'reset': lambda pose=None: self.execute_pose(self.arm,'reset'),
             'home': lambda pose=None: self.execute_pose(self.arm,'home'),
             'attack': lambda pose=None: self.execute_pose(self.arm,'attack'),
+            'pick_bowl': lambda pose=None: self.execute_pose(self.arm,'pick_bowl'),
+            'place_bowl': lambda pose=None: self.execute_pose(self.arm,'place_bowl'),
+            'pick_luggage': lambda pose=None: self.execute_pose(self.arm,'pick_luggage'),
+            'pick_front': lambda pose=None: self.execute_pose(self.arm,'pick_front'),
             'open': lambda pose=None: self.execute_pose(self.hand,'open'),
             'close': lambda pose=None: self.execute_pose(self.hand,'close'),
             'head_up': lambda pose=None: self.execute_pose(self.head,'up'),
             'head_down': lambda pose=None: self.execute_pose(self.head,'down'),
+            'sg_place_1': lambda pose=None: self.execute_pose(self.arm, 'place'),
+            'serving_right': lambda pose=None: self.serving('right'),
+            'serving_left': lambda pose=None: self.serving('left'),
             'hold_left': lambda pose=None: self.execute_pose(self.arm, 'hold_left'),
             'pick': lambda pose: self.pick(pose),
             'place': lambda pose=None: self.place(),
@@ -225,7 +233,31 @@ class Manipulator:
         scene = self.scene
         scene.remove_world_object(box_name)
         return self.wait_for_state_update(box_is_attached=False, box_is_known=False, timeout=4)
-
+    
+    def serving(self, side):
+        self.execute_pose(self.hand, 'open')
+        self.execute_pose(self.arm, 'attack')
+        self.execute_pose(self.hand, 'close')
+        self.execute_pose(self.arm, 'place')
+        if side == 'left':
+            pre = -1
+        elif side == 'right':
+            pre = 1
+        self.move_joint(5,0.75*pre)
+        self.move_joint(5,1.2*pre)
+        x = 1.2*pre
+        for i in range (2):
+            x += 0.3*pre
+            self.move_joint(5,x)
+            rospy.sleep(0.5)
+        for i in range (2):
+            x -= 0.3*pre
+            self.move_joint(5,x)
+            rospy.sleep(0.5)
+        self.move_joint(5,1.2*pre)
+        self.move_joint(5,0.75*pre)
+        self.execute_pose(self.arm, 'attack')
+        return
     
     def wait_for_state_update(self, box_is_known=False, box_is_attached=False, timeout=4):
         box_name = self.box_name
