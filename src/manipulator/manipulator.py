@@ -193,20 +193,20 @@ class Manipulator:
         success = self.arm.go(wait=True)
         if success:
             self.attach_box()
-            self.execute_pose(self.hand,'close')
+            success2 = self.execute_pose(self.hand,'close')
             self.execute_pose(self.arm,'attack')
             self.execute_pose(self.arm,'hold')
-        return success
+
+        return success2
     
     def place(self):
         self.clear_octomap()
         success = self.execute_pose(self.arm,'place')
+        rospy.sleep(2)
         if success:
             self.detach_box()
             self.remove_box()
             self.execute_pose(self.hand,'open')
-            self.execute_pose(self.arm,'attack')
-            self.execute_pose(self.arm,'home')
         return success
     
     def point_pixel(self, pixel):
