@@ -57,8 +57,6 @@ class Manipulator:
         function_name = request.type.lower()
         self.coordinates = request.goal
 
-        
-        quaternion = tf.transformations.quaternion_from_euler(self.coordinates.rx, self.coordinates.ry, self.coordinates.rz)
         pose = Pose(position=Point(self.coordinates.x, self.coordinates.y, self.coordinates.z), orientation=Quaternion(0.0,0.0,0.0,1.0))
 
 
@@ -66,10 +64,11 @@ class Manipulator:
             'reset': lambda pose=None: self.execute_pose(self.arm,'reset'),
             'home': lambda pose=None: self.execute_pose(self.arm,'home'),
             'attack': lambda pose=None: self.execute_pose(self.arm,'attack'),
-            'pick_bowl': lambda pose=None: self.execute_pose(self.arm,'pick_bowl'),
-            'place_bowl': lambda pose=None: self.execute_pose(self.arm,'place_bowl'),
+            'pick_bowl': lambda pose=None: self.pick_obj('pick_bowl'),
+            'place_bowl': lambda pose=None: self.place_obj('place_bowl'),
             'pick_luggage': lambda pose=None: self.execute_pose(self.arm,'pick_luggage'),
-            'pick_front': lambda pose=None: self.execute_pose(self.arm,'pick_front'),
+            'pick_front': lambda pose=None: self.pick_obj('pick_front'),
+            'place_front': lambda pose=None: self.place_obj('pick_front'),
             'open': lambda pose=None: self.execute_pose(self.hand,'open'),
             'close': lambda pose=None: self.execute_pose(self.hand,'close'),
             'head_up': lambda pose=None: self.execute_pose(self.head,'up'),
@@ -111,12 +110,13 @@ class Manipulator:
             rospy.logerr('Invalid function name %s' % function_name)
             return "Invalid function name: {}".format(function_name)
 
-    def add_box(self,pose):
+    def add_box(self):
         box_name = self.box_name
         scene = self.scene
         box_pose = PoseStamped()
-        box_pose.pose = pose
-        box_pose.header.frame_id = "manip_base_link"
+        box_pose.pose.orientation.w = 1.0
+        box_pose.pose.position.x = 0.2
+        box_pose.header.frame_id = "wrist_pan_link"
         box_name = "box"
         scene.add_box(box_name, box_pose, size=(0.05, 0.05, 0.15))
         return self.wait_for_state_update(box_is_known=True, timeout=4)
@@ -204,9 +204,22 @@ class Manipulator:
             success2 = self.execute_pose(self.hand,'close')
             self.execute_pose(self.arm,'attack')
             self.execute_pose(self.arm,'hold')
+            return success2
+        return success
 
-        return success2
+    def pick_obj(self, manip_pose):
+        self.execute_pose(self.arm,manip_pose)
+        self.add_box()
+        self.attach_box()
+        return
     
+    def place_obj(self, manip_pose):   
+        self.execute_pose(self.arm,manip_pose)
+        self.detach_box()
+        self.remove_box()
+        self.execute_pose(self.hand, 'open')
+        return
+
     def place(self):
         self.clear_octomap()
         success = self.execute_pose(self.arm,'place')
@@ -235,10 +248,7 @@ class Manipulator:
         return self.wait_for_state_update(box_is_attached=False, box_is_known=False, timeout=4)
     
     def serving(self, side):
-        self.execute_pose(self.hand, 'open')
-        self.execute_pose(self.arm, 'attack')
-        self.execute_pose(self.hand, 'close')
-        self.execute_pose(self.arm, 'place')
+        self.execute_pose(self.arm, 'pick_front')
         if side == 'left':
             pre = -1
         elif side == 'right':
