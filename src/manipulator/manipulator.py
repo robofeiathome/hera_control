@@ -187,7 +187,7 @@ class Manipulator:
         elif id == 7 or id == 8:
             id-=1
             group = self.hand
-        else
+        else:
             id-=1
             group = self.arm
 
