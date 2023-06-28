@@ -28,9 +28,6 @@ class Manipulator:
         self.head = moveit_commander.MoveGroupCommander("zed")
         self.head.set_max_acceleration_scaling_factor(1.0)
         self.head.set_max_velocity_scaling_factor(1.0)
-        self.motors = moveit_commander.MoveGroupCommander("all_motors")
-        self.motors.set_max_acceleration_scaling_factor(1.0)
-        self.motors.set_max_velocity_scaling_factor(1.0)
 
         self._objects = dict()
 
@@ -180,13 +177,23 @@ class Manipulator:
         return success
 
     def move_joint(self,id,position):
-        values = self.motors.get_current_joint_values()
-        id = 0 if id == 9 else id
-        position = 0 if id == 0 and position >= 0.0 else position
-        position = -1.5 if id == 0 and position <= -1.5 else position
+        if id == 9:
+            id = 0
+            group = self.head
+            position = 0 if position >= 0.0 else position
+            position = -1.5 if position <= -1.5 else position
+            
+        elif id == 7 or id == 8:
+            id-=1
+            group = self.hand
+        else
+            id-=1
+            group = self.arm
+
+        values = group.get_current_joint_values()
         values[id] = position
-        self.motors.set_joint_value_target(values)
-        success = self.motors.go(wait=True)
+        group.set_joint_value_target(values)
+        success = group.go(wait=True)
         return success
 
     def pick(self,pose):
