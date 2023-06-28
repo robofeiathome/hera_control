@@ -77,6 +77,7 @@ class Manipulator:
             'serving_right': lambda pose=None: self.serving('right'),
             'serving_left': lambda pose=None: self.serving('left'),
             'hold_left': lambda pose=None: self.execute_pose(self.arm, 'hold_left'),
+            'hold_right': lambda pose=None: self.execute_pose(self.arm, 'hold_right'),
             'pick': lambda pose: self.pick(pose),
             'place': lambda pose=None: self.place(),
             'cartesian_path': lambda pose: self.cartesian_path(pose),
@@ -195,7 +196,8 @@ class Manipulator:
         self.addCylinder(self.box_name, 0.15, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
         rospy.sleep(2)
         self.execute_pose(self.head, 'up')
-        pose.position.x -= 0.13
+        pose.position.z = 0.22
+        pose.position.x -= 0.115
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
         success = self.arm.go(wait=True)
@@ -203,7 +205,7 @@ class Manipulator:
             self.attach_box()
             success2 = self.execute_pose(self.hand,'close')
             self.execute_pose(self.arm,'attack')
-            self.execute_pose(self.arm,'hold')
+            self.execute_pose(self.arm,'hold_right')
             return success2
         return success
 
