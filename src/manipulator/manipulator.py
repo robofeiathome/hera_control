@@ -61,7 +61,7 @@ class Manipulator:
             'reset': lambda pose=None: self.execute_pose(self.arm,'reset'),
             'home': lambda pose=None: self.execute_pose(self.arm,'home'),
             'attack': lambda pose=None: self.execute_pose(self.arm,'attack'),
-            'pick_bowl': lambda pose=None: self.pick_obj('pick_bowl'),
+            'pick_bowl': lambda pose=None: self.pick_obj('place_bowl'),
             'place_bowl': lambda pose=None: self.place_obj('place_bowl'),
             'pick_luggage': lambda pose=None: self.execute_pose(self.arm,'pick_luggage'),
             'pick_front': lambda pose=None: self.pick_obj('pick_front'),
