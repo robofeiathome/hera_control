@@ -203,7 +203,7 @@ class Manipulator:
         self.addCylinder(self.box_name, 0.15, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
         rospy.sleep(2)
         self.execute_pose(self.head, 'up')
-        pose.position.z = 0.22
+        pose.position.z = 0.15
         pose.position.x -= 0.115
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
@@ -212,7 +212,6 @@ class Manipulator:
             self.attach_box()
             success2 = self.execute_pose(self.hand,'close')
             self.execute_pose(self.arm,'attack')
-            self.execute_pose(self.arm,'hold_right')
             return success2
         return success
 
@@ -257,7 +256,7 @@ class Manipulator:
         return self.wait_for_state_update(box_is_attached=False, box_is_known=False, timeout=4)
     
     def serving(self, side):
-        self.execute_pose(self.arm, 'pick_front')
+        self.execute_pose(self.arm, 'serve')
         if side == 'left':
             pre = -1
         elif side == 'right':
