@@ -61,19 +61,29 @@ class Manipulator:
             'reset': lambda pose=None: self.execute_pose(self.arm,'reset'),
             'home': lambda pose=None: self.execute_pose(self.arm,'home'),
             'attack': lambda pose=None: self.execute_pose(self.arm,'attack'),
-            'pick_bowl': lambda pose=None: self.pick_obj('place_bowl'),
-            'place_bowl': lambda pose=None: self.place_obj('place_bowl'),
-            'pick_luggage': lambda pose=None: self.execute_pose(self.arm,'pick_luggage'),
-            'pick_front': lambda pose=None: self.pick_obj('pick_front'),
-            'place_front': lambda pose=None: self.place_obj('pick_front'),
+            'pick_bowl': lambda pose=None: self.execute_pose(self.arm,'place_bowl'),
+            'place_bowl': lambda pose=None: self.execute_pose(self.arm,'place_bowl'),
+            'pick_lugagge': lambda pose=None: self.execute_pose(self.arm,'pick_lugagge'),
+            'pick_basket': lambda pose=None: self.execute_pose(self.arm,'pick_basket'),
+            'pick_bag': lambda pose=None: self.execute_pose(self.arm,'pick_bag'),
+            'mid_pick_lugagge': lambda pose=None: self.execute_pose(self.arm,'mid_pick_lugagge'),
+            'pick_front': lambda pose=None: self.execute_pose(self.arm,'pick_front'),
+            'pick_shelf1': lambda pose=None: self.pick_obj('pick_shelf1'),
+            'place_front': lambda pose=None: self.execute_pose(self.arm,'pick_front'),
+            'pick_down': lambda pose=None: self.execute_pose(self.arm,'pick_down'),
             'open': lambda pose=None: self.execute_pose(self.hand,'open'),
             'close': lambda pose=None: self.execute_pose(self.hand,'close'),
             'head_up': lambda pose=None: self.execute_pose(self.head,'up'),
             'head_down': lambda pose=None: self.execute_pose(self.head,'down'),
+            'way_down': lambda pose=None: self.execute_pose(self.head,'way_down'),
             'sg_place_1': lambda pose=None: self.execute_pose(self.arm, 'place'),
+            'serve': lambda pose=None: self.execute_pose(self.arm, 'serve'),
             'serving_right': lambda pose=None: self.serving('right'),
+            'serving_cereal_right': lambda pose=None: self.serving_cereal('right'),
+            'serving_cereal_left': lambda pose=None: self.serving_cereal('left'),
             'serving_left': lambda pose=None: self.serving('left'),
             'hold_left': lambda pose=None: self.execute_pose(self.arm, 'hold_left'),
+            'hold_lugagge': lambda pose=None: self.execute_pose(self.arm, 'hold_lugagge'),
             'hold_right': lambda pose=None: self.execute_pose(self.arm, 'hold_right'),
             'pick': lambda pose: self.pick(pose),
             'place': lambda pose=None: self.place(),
@@ -239,12 +249,14 @@ class Manipulator:
         return success
     
     def point_pixel(self, pixel):
+        self.execute_pose(self.hand, 'close')
         self.execute_pose(self.arm, 'point')
         x = ((-1.55/1920)*pixel) + 0.775
         self.move_joint(1, x)
         return True
 
     def point_rad(self,angle):
+        self.execute_pose(self.hand, 'close')
         self.execute_pose(self.arm, 'point')
         self.move_joint(1, angle)
         return True    
@@ -264,16 +276,35 @@ class Manipulator:
         self.move_joint(5,0.75*pre)
         self.move_joint(5,1.2*pre)
         x = 1.2*pre
-        for i in range (2):
+        for i in range (1):
             x += 0.3*pre
             self.move_joint(5,x)
             rospy.sleep(0.5)
-        for i in range (2):
+        for i in range (1):
             x -= 0.3*pre
             self.move_joint(5,x)
             rospy.sleep(0.5)
-        self.move_joint(5,1.2*pre)
+        self.execute_pose(self.arm, 'serve')
+        self.execute_pose(self.arm, 'attack')
+        return
+    
+    def serving_cereal(self, side):
+        self.execute_pose(self.arm, 'serve')
+        if side == 'left':
+            pre = -1
+        elif side == 'right':
+            pre = 1
         self.move_joint(5,0.75*pre)
+        self.move_joint(5,1.2*pre)
+        x = 1.2*pre
+        for i in range (4):
+            x += 0.3*pre
+            self.move_joint(5,x)
+            rospy.sleep(0.5)
+        x -= 0.3*pre
+        self.move_joint(5,x)
+        rospy.sleep(0.5)
+        self.execute_pose(self.arm, 'serve')
         self.execute_pose(self.arm, 'attack')
         return
     
