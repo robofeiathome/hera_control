@@ -213,7 +213,7 @@ class Manipulator:
         self.addCylinder(self.box_name, 0.15, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
         rospy.sleep(2)
         self.execute_pose(self.head, 'up')
-        pose.position.z = 0.15
+        pose.position.z = 0.20
         pose.position.x -= 0.115
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
