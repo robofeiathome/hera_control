@@ -210,7 +210,7 @@ class Manipulator:
     def pick(self,pose):
         self.execute_pose(self.hand,'open')
         self.clear_octomap()
-        self.addCylinder(self.box_name, 0.15, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
+        self.addCylinder(self.box_name, 0.2, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
         rospy.sleep(2)
         self.execute_pose(self.head, 'up')
         pose.position.z = 0.20
