@@ -88,6 +88,8 @@ class Manipulator:
             'pick': lambda pose: self.pick(pose),
             'place': lambda pose=None: self.place(),
             'cartesian_path': lambda pose: self.cartesian_path(pose),
+            'add_shelfs': lambda pose=None: self.add_shelfs(pose.position.x),
+            'remove_shelfs': lambda pose=None: self.remove_shelfs(),
             '': lambda pose: self.go_to_coordinates(pose),
         }
 
@@ -128,6 +130,30 @@ class Manipulator:
         box_name = "box"
         scene.add_box(box_name, box_pose, size=(0.05, 0.05, 0.15))
         return self.wait_for_state_update(box_is_known=True, timeout=4)
+    
+    def add_box_object(self, name, dimensions, pose):
+        p = PoseStamped()
+        p.header.frame_id = "manip_base_link"
+        p.header.stamp = rospy.Time.now()
+        p.pose.position.x = pose[0]
+        p.pose.position.y = pose[1]
+        p.pose.position.z = pose[2]
+        p.pose.orientation.x = pose[3]
+        p.pose.orientation.y = pose[4]
+        p.pose.orientation.z = pose[5]
+        p.pose.orientation.w = pose[6]
+
+        self.scene.add_box(name, p, (dimensions[0], dimensions[1], dimensions[2]))
+    
+    def add_shelfs(self,positionx):
+        self.shelf1_pose = [positionx, 0.0, 0.15, 0, 0, 0, 1]
+        self.shelf2_pose = [positionx, 0.0, 0.37, 0, 0, 0, 1]
+        
+        self.shelf_dimensions = [0.42, 2.00, 0.02]
+
+        self.add_box_object("shelf1", self.shelf_dimensions, self.shelf1_pose)
+        self.add_box_object("shelf2", self.shelf_dimensions, self.shelf2_pose)
+        return True
     
     def makeSolidPrimitive(self, name, solid, pose):
         o = CollisionObject()
@@ -210,15 +236,15 @@ class Manipulator:
     def pick(self,pose):
         self.execute_pose(self.hand,'open')
         self.clear_octomap()
-        self.addCylinder(self.box_name, 0.10, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
+        self.addCylinder(self.box_name, 0.20, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
         rospy.sleep(2)
-        # self.execute_pose(self.head, 'down')
-        # pose.position.z = 0.20
-        pose.position.y -= 0.02
+        self.execute_pose(self.head, 'down')
+        pose.position.z = 0.20
+        # pose.position.y -= 0.02
         pose.position.x -= 0.115
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
-        self.execute_pose(self.head, 'up')
+        # self.execute_pose(self.head, 'up')
         rospy.sleep(1)
         success = self.arm.go(wait=True)
         if success:
@@ -269,6 +295,11 @@ class Manipulator:
         scene = self.scene
         scene.remove_world_object(box_name)
         return self.wait_for_state_update(box_is_attached=False, box_is_known=False, timeout=4)
+    
+    def remove_shelfs(self):
+        self.scene.remove_world_object("shelf1")
+        self.scene.remove_world_object("shelf2")
+        return True
     
     def serving(self, side):
         self.execute_pose(self.arm, 'serve')
