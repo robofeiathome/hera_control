@@ -88,8 +88,6 @@ class Manipulator:
             'pick': lambda pose: self.pick(pose),
             'place': lambda pose=None: self.place(),
             'cartesian_path': lambda pose: self.cartesian_path(pose),
-            'add_shelfs': lambda pose=None: self.add_shelfs(pose.position.x),
-            'remove_shelfs': lambda pose=None: self.remove_shelfs(),
             '': lambda pose: self.go_to_coordinates(pose),
         }
 
@@ -110,6 +108,8 @@ class Manipulator:
             '': lambda id, position: self.move_joint(id, position),
             'point_rad': lambda id,position: self.point_rad(position),
             'point_pixel': lambda id,position: self.point_pixel(position),
+            'add_shelfs': lambda id, position: self.add_shelfs(position),
+            'remove_shelfs': lambda id, position: self.remove_shelfs(),
         }
 
         try:
@@ -236,7 +236,7 @@ class Manipulator:
     def pick(self,pose):
         self.execute_pose(self.hand,'open')
         self.clear_octomap()
-        self.addCylinder(self.box_name, 0.20, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
+        self.addCylinder(self.box_name, 0.07, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
         rospy.sleep(2)
         self.execute_pose(self.head, 'down')
         pose.position.z = 0.20
