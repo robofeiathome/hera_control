@@ -236,15 +236,15 @@ class Manipulator:
     def pick(self,pose):
         self.execute_pose(self.hand,'open')
         self.clear_octomap()
-        self.addCylinder(self.box_name, 0.07, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
+        self.addCylinder(self.box_name, 0.1, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
         rospy.sleep(2)
         self.execute_pose(self.head, 'down')
         pose.position.z = 0.20
         # pose.position.y -= 0.02
-        pose.position.x -= 0.115
+        pose.position.x -= 0.1175
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
-        # self.execute_pose(self.head, 'up')
+        self.execute_pose(self.head, 'up')
         rospy.sleep(1)
         success = self.arm.go(wait=True)
         if success:
@@ -280,7 +280,7 @@ class Manipulator:
     def point_pixel(self, pixel):
         self.execute_pose(self.hand, 'close')
         self.execute_pose(self.arm, 'point')
-        x = ((-1.55/1920)*pixel) + 0.775
+        x = ((-1.55/640)*pixel) + 0.775
         self.move_joint(1, x)
         return True
 
