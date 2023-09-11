@@ -61,33 +61,19 @@ class Manipulator:
             'reset': lambda pose=None: self.execute_pose(self.arm,'reset'),
             'home': lambda pose=None: self.execute_pose(self.arm,'home'),
             'attack': lambda pose=None: self.execute_pose(self.arm,'attack'),
-            'pick_bowl': lambda pose=None: self.execute_pose(self.arm,'place_bowl'),
-            'place_bowl': lambda pose=None: self.execute_pose(self.arm,'place_bowl'),
-            'pick_lugagge': lambda pose=None: self.execute_pose(self.arm,'pick_lugagge'),
-            'pick_basket': lambda pose=None: self.execute_pose(self.arm,'pick_basket'),
-            'pick_bag': lambda pose=None: self.execute_pose(self.arm,'pick_bag'),
-            'mid_pick_lugagge': lambda pose=None: self.execute_pose(self.arm,'mid_pick_lugagge'),
-            'pick_front': lambda pose=None: self.execute_pose(self.arm,'pick_front'),
-            'pick_shelf1': lambda pose=None: self.pick_obj('pick_shelf1'),
-            'place_front': lambda pose=None: self.execute_pose(self.arm,'pick_front'),
-            'pick_down': lambda pose=None: self.execute_pose(self.arm,'pick_down'),
             'open': lambda pose=None: self.execute_pose(self.hand,'open'),
             'close': lambda pose=None: self.execute_pose(self.hand,'close'),
             'head_up': lambda pose=None: self.execute_pose(self.head,'up'),
             'head_down': lambda pose=None: self.execute_pose(self.head,'down'),
             'way_down': lambda pose=None: self.execute_pose(self.head,'way_down'),
-            'sg_place_1': lambda pose=None: self.execute_pose(self.arm, 'place'),
-            'serve': lambda pose=None: self.execute_pose(self.arm, 'serve'),
             'serving_right': lambda pose=None: self.serving('right'),
             'serving_cereal_right': lambda pose=None: self.serving_cereal('right'),
             'serving_cereal_left': lambda pose=None: self.serving_cereal('left'),
             'serving_left': lambda pose=None: self.serving('left'),
             'hold_left': lambda pose=None: self.execute_pose(self.arm, 'hold_left'),
-            'hold_lugagge': lambda pose=None: self.execute_pose(self.arm, 'hold_lugagge'),
             'hold_right': lambda pose=None: self.execute_pose(self.arm, 'hold_right'),
             'pick': lambda pose: self.pick(pose),
             'place': lambda pose=None: self.place(),
-            'cartesian_path': lambda pose: self.cartesian_path(pose),
             '': lambda pose: self.go_to_coordinates(pose),
         }
 
@@ -253,19 +239,6 @@ class Manipulator:
             self.execute_pose(self.arm,'attack')
             return success2
         return success
-
-    def pick_obj(self, manip_pose):
-        self.execute_pose(self.arm,manip_pose)
-        self.add_box()
-        self.attach_box()
-        return
-    
-    def place_obj(self, manip_pose):   
-        self.execute_pose(self.arm,manip_pose)
-        self.detach_box()
-        self.remove_box()
-        self.execute_pose(self.hand, 'open')
-        return
 
     def place(self):
         self.clear_octomap()
