@@ -28,9 +28,6 @@ class Manipulator:
         self.head = moveit_commander.MoveGroupCommander("zed")
         self.head.set_max_acceleration_scaling_factor(1.0)
         self.head.set_max_velocity_scaling_factor(1.0)
-        self.motors = moveit_commander.MoveGroupCommander("all_motors")
-        self.motors.set_max_acceleration_scaling_factor(1.0)
-        self.motors.set_max_velocity_scaling_factor(1.0)
 
         self._objects = dict()
 
@@ -57,8 +54,6 @@ class Manipulator:
         function_name = request.type.lower()
         self.coordinates = request.goal
 
-        
-        quaternion = tf.transformations.quaternion_from_euler(self.coordinates.rx, self.coordinates.ry, self.coordinates.rz)
         pose = Pose(position=Point(self.coordinates.x, self.coordinates.y, self.coordinates.z), orientation=Quaternion(0.0,0.0,0.0,1.0))
 
 
@@ -70,10 +65,15 @@ class Manipulator:
             'close': lambda pose=None: self.execute_pose(self.hand,'close'),
             'head_up': lambda pose=None: self.execute_pose(self.head,'up'),
             'head_down': lambda pose=None: self.execute_pose(self.head,'down'),
-            'sg_place_1': lambda pose=None: self.execute_pose(self.arm, 'place'),
+            'way_down': lambda pose=None: self.execute_pose(self.head,'way_down'),
+            'serving_right': lambda pose=None: self.serving('right'),
+            'serving_cereal_right': lambda pose=None: self.serving_cereal('right'),
+            'serving_cereal_left': lambda pose=None: self.serving_cereal('left'),
+            'serving_left': lambda pose=None: self.serving('left'),
+            'hold_left': lambda pose=None: self.execute_pose(self.arm, 'hold_left'),
+            'hold_right': lambda pose=None: self.execute_pose(self.arm, 'hold_right'),
             'pick': lambda pose: self.pick(pose),
-            'place': lambda pose: self.place(pose),
-            'cartesian_path': lambda pose: self.cartesian_path(pose),
+            'place': lambda pose=None: self.place(),
             '': lambda pose: self.go_to_coordinates(pose),
         }
 
@@ -94,6 +94,8 @@ class Manipulator:
             '': lambda id, position: self.move_joint(id, position),
             'point_rad': lambda id,position: self.point_rad(position),
             'point_pixel': lambda id,position: self.point_pixel(position),
+            'add_shelfs': lambda id, position: self.add_shelfs(position),
+            'remove_shelfs': lambda id, position: self.remove_shelfs(),
         }
 
         try:
@@ -104,15 +106,40 @@ class Manipulator:
             rospy.logerr('Invalid function name %s' % function_name)
             return "Invalid function name: {}".format(function_name)
 
-    def add_box(self,pose):
+    def add_box(self):
         box_name = self.box_name
         scene = self.scene
         box_pose = PoseStamped()
-        box_pose.pose = pose
-        box_pose.header.frame_id = "manip_base_link"
+        box_pose.pose.orientation.w = 1.0
+        box_pose.pose.position.x = 0.2
+        box_pose.header.frame_id = "wrist_pan_link"
         box_name = "box"
         scene.add_box(box_name, box_pose, size=(0.05, 0.05, 0.15))
         return self.wait_for_state_update(box_is_known=True, timeout=4)
+    
+    def add_box_object(self, name, dimensions, pose):
+        p = PoseStamped()
+        p.header.frame_id = "manip_base_link"
+        p.header.stamp = rospy.Time.now()
+        p.pose.position.x = pose[0]
+        p.pose.position.y = pose[1]
+        p.pose.position.z = pose[2]
+        p.pose.orientation.x = pose[3]
+        p.pose.orientation.y = pose[4]
+        p.pose.orientation.z = pose[5]
+        p.pose.orientation.w = pose[6]
+
+        self.scene.add_box(name, p, (dimensions[0], dimensions[1], dimensions[2]))
+    
+    def add_shelfs(self,positionx):
+        self.shelf1_pose = [positionx, 0.0, 0.15, 0, 0, 0, 1]
+        self.shelf2_pose = [positionx, 0.0, 0.37, 0, 0, 0, 1]
+        
+        self.shelf_dimensions = [0.42, 2.00, 0.02]
+
+        self.add_box_object("shelf1", self.shelf_dimensions, self.shelf1_pose)
+        self.add_box_object("shelf2", self.shelf_dimensions, self.shelf2_pose)
+        return True
     
     def makeSolidPrimitive(self, name, solid, pose):
         o = CollisionObject()
@@ -173,50 +200,60 @@ class Manipulator:
         return success
 
     def move_joint(self,id,position):
-        values = self.motors.get_current_joint_values()
-        id = 0 if id == 9 else id
+        if id == 9:
+            id = 0
+            group = self.head
+            position = 0 if position >= 0.0 else position
+            position = -1.5 if position <= -1.5 else position
+            
+        elif id == 7 or id == 8:
+            id-=1
+            group = self.hand
+        else:
+            id-=1
+            group = self.arm
+
+        values = group.get_current_joint_values()
         values[id] = position
-        self.motors.set_joint_value_target(values)
-        success = self.motors.go(wait=True)
+        group.set_joint_value_target(values)
+        success = group.go(wait=True)
         return success
 
     def pick(self,pose):
         self.execute_pose(self.hand,'open')
         self.clear_octomap()
-        self.addCylinder(self.box_name, 0.15, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
+        self.addCylinder(self.box_name, 0.1, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
         rospy.sleep(2)
-        self.execute_pose(self.head, 'head_up')
-        pose.position.x -= 0.13
+        self.execute_pose(self.head, 'down')
+        pose.position.z = 0.20
+        # pose.position.y -= 0.02
+        pose.position.x -= 0.115
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
+        self.execute_pose(self.head, 'up')
+        rospy.sleep(1)
         success = self.arm.go(wait=True)
         if success:
             self.attach_box()
-            self.execute_pose(self.hand,'close')
+            success2 = self.execute_pose(self.hand,'close')
             self.execute_pose(self.arm,'attack')
-            self.execute_pose(self.arm,'hold')
+            return success2
         return success
-    
-    def place(self,pose):
-        self.execute_pose(self.arm,'hold')
-        pose.position.x -= 0.15
-        pose.position.z += 0.1
-        rospy.sleep(2)
+
+    def place(self):
         self.clear_octomap()
-        target_pose = copy.deepcopy(pose)
-        self.arm.set_pose_target(target_pose)
-        success = self.arm.go(wait=True)
+        success = self.execute_pose(self.arm,'place')
+        rospy.sleep(2)
         if success:
             self.detach_box()
             self.remove_box()
             self.execute_pose(self.hand,'open')
-            self.execute_pose(self.arm,'home')
         return success
     
     def point_pixel(self, pixel):
         self.execute_pose(self.hand, 'close')
         self.execute_pose(self.arm, 'point')
-        x = ((-1.55/1920)*pixel) + 0.775
+        x = ((-1.55/640)*pixel) + 0.775
         self.move_joint(1, x)
         return True
 
@@ -231,7 +268,52 @@ class Manipulator:
         scene = self.scene
         scene.remove_world_object(box_name)
         return self.wait_for_state_update(box_is_attached=False, box_is_known=False, timeout=4)
-
+    
+    def remove_shelfs(self):
+        self.scene.remove_world_object("shelf1")
+        self.scene.remove_world_object("shelf2")
+        return True
+    
+    def serving(self, side):
+        self.execute_pose(self.arm, 'serve')
+        if side == 'left':
+            pre = -1
+        elif side == 'right':
+            pre = 1
+        self.move_joint(5,0.75*pre)
+        self.move_joint(5,1.2*pre)
+        x = 1.2*pre
+        for i in range (1):
+            x += 0.3*pre
+            self.move_joint(5,x)
+            rospy.sleep(0.5)
+        for i in range (1):
+            x -= 0.3*pre
+            self.move_joint(5,x)
+            rospy.sleep(0.5)
+        self.execute_pose(self.arm, 'serve')
+        self.execute_pose(self.arm, 'attack')
+        return
+    
+    def serving_cereal(self, side):
+        self.execute_pose(self.arm, 'serve')
+        if side == 'left':
+            pre = -1
+        elif side == 'right':
+            pre = 1
+        self.move_joint(5,0.75*pre)
+        self.move_joint(5,1.2*pre)
+        x = 1.2*pre
+        for i in range (4):
+            x += 0.3*pre
+            self.move_joint(5,x)
+            rospy.sleep(0.5)
+        x -= 0.3*pre
+        self.move_joint(5,x)
+        rospy.sleep(0.5)
+        self.execute_pose(self.arm, 'serve')
+        self.execute_pose(self.arm, 'attack')
+        return
     
     def wait_for_state_update(self, box_is_known=False, box_is_attached=False, timeout=4):
         box_name = self.box_name
