@@ -132,13 +132,15 @@ class Manipulator:
         self.scene.add_box(name, p, (dimensions[0], dimensions[1], dimensions[2]))
     
     def add_shelfs(self,positionx):
-        self.shelf1_pose = [positionx, 0.0, 0.15, 0, 0, 0, 1]
-        self.shelf2_pose = [positionx, 0.0, 0.37, 0, 0, 0, 1]
+        self.shelf1_pose = [positionx, 0.0, -0.15, 0, 0, 0, 1]
+        self.shelf2_pose = [positionx, 0.0, 0.15, 0, 0, 0, 1]
+        self.shelf3_pose = [positionx, 0.0, 0.50, 0, 0, 0, 1]
         
         self.shelf_dimensions = [0.42, 2.00, 0.02]
 
         self.add_box_object("shelf1", self.shelf_dimensions, self.shelf1_pose)
         self.add_box_object("shelf2", self.shelf_dimensions, self.shelf2_pose)
+        self.add_box_object("shelf3", self.shelf_dimensions, self.shelf3_pose)
         return True
     
     def makeSolidPrimitive(self, name, solid, pose):
