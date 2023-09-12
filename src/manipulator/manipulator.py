@@ -132,11 +132,11 @@ class Manipulator:
         self.scene.add_box(name, p, (dimensions[0], dimensions[1], dimensions[2]))
     
     def add_shelfs(self,positionx):
-        self.shelf1_pose = [positionx, 0.0, -0.15, 0, 0, 0, 1]
-        self.shelf2_pose = [positionx, 0.0, 0.15, 0, 0, 0, 1]
-        self.shelf3_pose = [positionx, 0.0, 0.50, 0, 0, 0, 1]
+        self.shelf1_pose = [(positionx - 0.2), 0.0, 0.06, 0, 0, 0, 1]
+        self.shelf2_pose = [(positionx - 0.2), 0.0, 0.38, 0, 0, 0, 1]
+        self.shelf3_pose = [(positionx - 0.2), 0.0, 0.70, 0, 0, 0, 1]
         
-        self.shelf_dimensions = [0.42, 2.00, 0.02]
+        self.shelf_dimensions = [0.5, 2.00, 0.02]
 
         self.add_box_object("shelf1", self.shelf_dimensions, self.shelf1_pose)
         self.add_box_object("shelf2", self.shelf_dimensions, self.shelf2_pose)
@@ -165,9 +165,9 @@ class Manipulator:
 
         ps = PoseStamped()
         ps.header.frame_id = "manip_base_link"
-        ps.pose.position.x = x
+        ps.pose.position.x = x + 0.05
         ps.pose.position.y = y
-        ps.pose.position.z = z
+        ps.pose.position.z = z + 0.05
         ps.pose.orientation.w = 1.0
 
         self.addSolidPrimitive(name, s, ps.pose)
@@ -224,7 +224,7 @@ class Manipulator:
     def pick(self,pose):
         self.execute_pose(self.hand,'open')
         self.clear_octomap()
-        self.addCylinder(self.box_name, 0.1, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
+        self.addCylinder(self.box_name, 0.15, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
         rospy.sleep(2)
         self.execute_pose(self.head, 'down')
         pose.position.z = 0.20
