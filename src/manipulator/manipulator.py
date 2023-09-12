@@ -238,7 +238,7 @@ class Manipulator:
         if success:
             self.attach_box()
             success2 = self.execute_pose(self.hand,'close')
-            self.execute_pose(self.arm,'attack')
+            # self.execute_pose(self.arm,'attack')
             return success2
         return success
 
