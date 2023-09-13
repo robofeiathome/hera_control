@@ -63,6 +63,7 @@ class Manipulator:
             'attack': lambda pose=None: self.execute_pose(self.arm,'attack'),
             'open': lambda pose=None: self.execute_pose(self.hand,'open'),
             'close': lambda pose=None: self.execute_pose(self.hand,'close'),
+            'add_shelfs': lambda pose: self.add_shelfs(pose.position.x),
             'head_up': lambda pose=None: self.execute_pose(self.head,'up'),
             'head_down': lambda pose=None: self.execute_pose(self.head,'down'),
             'way_down': lambda pose=None: self.execute_pose(self.head,'way_down'),
@@ -165,9 +166,9 @@ class Manipulator:
 
         ps = PoseStamped()
         ps.header.frame_id = "manip_base_link"
-        ps.pose.position.x = x + 0.05
+        ps.pose.position.x = x
         ps.pose.position.y = y
-        ps.pose.position.z = z + 0.05
+        ps.pose.position.z = z 
         ps.pose.orientation.w = 1.0
 
         self.addSolidPrimitive(name, s, ps.pose)
@@ -227,9 +228,7 @@ class Manipulator:
         self.addCylinder(self.box_name, 0.15, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
         rospy.sleep(2)
         self.execute_pose(self.head, 'down')
-        pose.position.z = 0.20
-        # pose.position.y -= 0.02
-        pose.position.x -= 0.115
+        pose.position.x -= 0.18
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
         self.execute_pose(self.head, 'up')
@@ -274,6 +273,7 @@ class Manipulator:
     def remove_shelfs(self):
         self.scene.remove_world_object("shelf1")
         self.scene.remove_world_object("shelf2")
+        self.scene.remove_world_object("shelf3")
         return True
     
     def serving(self, side):
