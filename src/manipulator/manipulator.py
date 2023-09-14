@@ -133,9 +133,9 @@ class Manipulator:
         self.scene.add_box(name, p, (dimensions[0], dimensions[1], dimensions[2]))
     
     def add_shelfs(self,positionx):
-        self.shelf1_pose = [(positionx - 0.2), 0.0, 0.06, 0, 0, 0, 1]
-        self.shelf2_pose = [(positionx - 0.2), 0.0, 0.38, 0, 0, 0, 1]
-        self.shelf3_pose = [(positionx - 0.2), 0.0, 0.70, 0, 0, 0, 1]
+        self.shelf1_pose = [(positionx - 0.22), 0.0, 0.06, 0, 0, 0, 1]
+        self.shelf2_pose = [(positionx - 0.22), 0.0, 0.38, 0, 0, 0, 1]
+        self.shelf3_pose = [(positionx - 0.22), 0.0, 0.70, 0, 0, 0, 1]
         
         self.shelf_dimensions = [0.5, 2.00, 0.02]
 
@@ -225,9 +225,10 @@ class Manipulator:
     def pick(self,pose):
         self.execute_pose(self.hand,'open')
         self.clear_octomap()
-        self.addCylinder(self.box_name, 0.15, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
+        self.addCylinder(self.box_name, 0.16, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
         rospy.sleep(2)
         self.execute_pose(self.head, 'down')
+        pose.position.y = 0.21
         pose.position.x -= 0.18
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
@@ -254,7 +255,7 @@ class Manipulator:
     def point_pixel(self, pixel):
         self.execute_pose(self.hand, 'close')
         self.execute_pose(self.arm, 'point')
-        x = ((-1.55/640)*pixel) + 0.775
+        x = ((-1.55/1920)*pixel) + 0.775
         self.move_joint(1, x)
         return True
 
