@@ -29,12 +29,14 @@ add_message_files(
   FILES
   Manip_Goal.msg
   Joint_Goal.msg
+  Furniture_Pose.msg
 )
 
 add_service_files(
   FILES
   Manip_service.srv
   Joint_service.srv
+  Furniture.srv
 )
 
 generate_messages(

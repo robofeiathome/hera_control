@@ -8,7 +8,7 @@ import moveit_commander
 import moveit_msgs.msg
 from moveit_msgs.msg import CollisionObject, AttachedCollisionObject
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
-from hera_control.srv import Manip_service, Joint_service
+from hera_control.srv import Manip_service, Joint_service, Furniture
 from std_srvs.srv import Empty as Empty_srv
 from shape_msgs.msg import MeshTriangle, Mesh, SolidPrimitive, Plane
 
@@ -39,6 +39,7 @@ class Manipulator:
 
         rospy.Service('manipulator', Manip_service, self.handler)
         rospy.Service('joint_command', Joint_service, self.joints_handler)
+        rospy.Service('adding_furniture', Furniture, self.adding_furniture)
         self.tf = tf.TransformListener()
         self.tf.waitForTransform('manip_base_link', 'torso', rospy.Time(), rospy.Duration(1.0))
 
@@ -106,6 +107,27 @@ class Manipulator:
         except KeyError:
             rospy.logerr('Invalid function name %s' % function_name)
             return "Invalid function name: {}".format(function_name)
+        
+    def adding_furniture(self, request):
+        function_name = request.type
+        num = request.num
+        height = request.height
+        pose = request.goal
+
+        functions = {
+            'add_bookcase': lambda pose: self.add_bookcase(num, height, pose)
+        }
+
+        try:
+            result = functions[function_name](pose)
+            return str(result)
+
+        except KeyError:
+            rospy.logerr('Invalid function name %s' % function_name)
+            return "Invalid function name: {}".format(function_name)
+
+
+
 
     def add_box(self):
         box_name = self.box_name
@@ -120,7 +142,7 @@ class Manipulator:
     
     def add_box_object(self, name, dimensions, pose):
         p = PoseStamped()
-        p.header.frame_id = "manip_base_link"
+        p.header.frame_id = "/map"
         p.header.stamp = rospy.Time.now()
         p.pose.position.x = pose[0]
         p.pose.position.y = pose[1]
@@ -132,16 +154,24 @@ class Manipulator:
 
         self.scene.add_box(name, p, (dimensions[0], dimensions[1], dimensions[2]))
     
-    def add_shelfs(self,positionx):
-        self.shelf1_pose = [(positionx - 0.22), 0.0, 0.06, 0, 0, 0, 1]
-        self.shelf2_pose = [(positionx - 0.22), 0.0, 0.38, 0, 0, 0, 1]
-        self.shelf3_pose = [(positionx - 0.22), 0.0, 0.70, 0, 0, 0, 1]
-        
-        self.shelf_dimensions = [0.5, 2.00, 0.02]
+    def add_bookcase(self, num, height, pose):
+        largura = 0.925
+        espessura = 0.02
+        profundidade = 0.45
 
-        self.add_box_object("shelf1", self.shelf_dimensions, self.shelf1_pose)
-        self.add_box_object("shelf2", self.shelf_dimensions, self.shelf2_pose)
-        self.add_box_object("shelf3", self.shelf_dimensions, self.shelf3_pose)
+        self.shelf_dimensions = [profundidade, largura, espessura]
+        shelves_heights = 0
+        for i in range(num+1):
+            self.shelf_pose = [pose.x, pose.y, shelves_heights, 0, 0, 0, 1]
+            self.add_box_object("shelf{}"+format(i), self.shelf_dimensions, self.shelf_pose)
+            shelves_heights += (height/num)
+        
+        self.wall_dimensions = [profundidade, espessura, height, 0, 0, 0, 1]
+
+        self.wall1_pose = [self.shelf_pose[0], self.shelf_pose[1] - self.shelf_dimensions[1]/2, height/2 , 0, 0, 0, 1]
+        self.wall2_pose = [self.shelf_pose[0], self.shelf_pose[1] + self.shelf_dimensions[1]/2, height/2 , 0, 0, 0, 1]        
+        self.add_box_object("wall1", self.wall_dimensions, self.wall1_pose)
+        self.add_box_object("wall2", self.wall_dimensions, self.wall2_pose)
         return True
     
     def makeSolidPrimitive(self, name, solid, pose):
