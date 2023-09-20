@@ -36,12 +36,14 @@ add_service_files(
   Manip_service.srv
   Joint_service.srv
   Furniture.srv
+  Raposo_service.srv
 )
 
 generate_messages(
   DEPENDENCIES
   geometry_msgs
   std_msgs
+  hera_objects
 )
 
 catkin_package(
