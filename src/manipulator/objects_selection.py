@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import sys
 import rospy
+from hera_control.srv import Raposo_service
+from hera_objects.srv import FindObject
 
 class Raposo:
 
@@ -9,32 +11,31 @@ class Raposo:
         rospy.Service('RaposoNaoPegue', Raposo_service, self.object_selection)
 
         self.allObjects = [
-                            ('English_Sauce', 4), 
-                            ('Tonic', 0),
-                            ('Coke', 5), 
-                            ('Potato_Chips', 5),
-                            ('Tomato_Sauce', 1), 
-                            ('Mustard', 5)]
+                            ('English_Sauce0', 4), 
+                            ('Tonic0', 0),
+                            ('Coke0', 5), 
+                            ('Potato_Chips0', 5),
+                            ('Tomato_Sauce0', 1), 
+                            ('Mustard0', 5)]
 
 
-    def object_selection(self):
+    def object_selection(self,req):
         resp = self.objects("all")
         coordinates = resp.position
         names = resp.taken_object
-        for i in names:
-            if names[i] == allObjects[i][0] and allObjects[i][1] == 5:
-                ObjectsToPickCoordinates.append(coordinates[i])
-                ObjectsToPickName.append(names[i])
-            if len(ObjectsToPickCoordinates) == 3:
-                for i in ObjectsToPickCoordinates:
-                    print(ObjectsToPickName[i])
-                return ObjectsToPickCoordinates,ObjectsToPickName
+        self.ObjectsToPickCoordinates = []
+        self.ObjectsToPickName = []
+        for i in range (len(names)):
+            for j in range (len(self.allObjects)):
+                if names[i] == self.allObjects[j][0] and self.allObjects[j][1] == 5:
+                    self.ObjectsToPickCoordinates.append(coordinates[i])
+                    self.ObjectsToPickName.append(names[i])
+            if len(self.ObjectsToPickCoordinates) == 3:
+                return self.ObjectsToPickCoordinates,self.ObjectsToPickName
 
 if __name__ == '__main__':
-    moveit_commander.roscpp_initialize(sys.argv)
     rospy.init_node('raposo', log_level=rospy.INFO)
     Raposo()
-
     try:
         rospy.spin()
     except rospy.ROSInterruptException:
