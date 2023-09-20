@@ -43,9 +43,9 @@ class Manipulator:
         self.tf = tf.TransformListener()
         self.tf.waitForTransform('manip_base_link', 'torso', rospy.Time(), rospy.Duration(1.0))
 
-        self.execute_pose(self.arm,'home')
-        self.execute_pose(self.hand,'open')
-        self.execute_pose(self.head,'up')
+        # self.execute_pose(self.arm,'home')
+        # self.execute_pose(self.hand,'open')
+        # self.execute_pose(self.head,'up')
  
 
         self.box_name = "box"
@@ -76,6 +76,7 @@ class Manipulator:
             'hold_right': lambda pose=None: self.execute_pose(self.arm, 'hold_right'),
             'pick': lambda pose: self.pick(pose),
             'place': lambda pose=None: self.place(),
+            'place_bottom_shelf': lambda pose=None: self.execute_pose(self.arm, 'place_bottom_shelf'),
             '': lambda pose: self.go_to_coordinates(pose),
         }
 
