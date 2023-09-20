@@ -1,6 +1,6 @@
 string type
 int32 num
 float64 height
-Furniture_Pose goal
+Manip_Goal goal
 ---
 string result

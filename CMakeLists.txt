@@ -29,7 +29,6 @@ add_message_files(
   FILES
   Manip_Goal.msg
   Joint_Goal.msg
-  Furniture_Pose.msg
 )
 
 add_service_files(

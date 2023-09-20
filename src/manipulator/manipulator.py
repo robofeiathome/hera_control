@@ -112,7 +112,9 @@ class Manipulator:
         function_name = request.type
         num = request.num
         height = request.height
-        pose = request.goal
+        self.coordinates = request.goal
+
+        pose = Pose(position=Point(self.coordinates.x, self.coordinates.y, self.coordinates.z), orientation=Quaternion(0.0,0.0,0.0,1.0))
 
         functions = {
             'add_bookcase': lambda pose: self.add_bookcase(num, height, pose)
@@ -162,7 +164,7 @@ class Manipulator:
         self.shelf_dimensions = [profundidade, largura, espessura]
         shelves_heights = 0
         for i in range(num+1):
-            self.shelf_pose = [pose.x, pose.y, shelves_heights, 0, 0, 0, 1]
+            self.shelf_pose = [pose.position.x, pose.position.y, shelves_heights, 0, 0, -0.6, 0.77]
             self.add_box_object("shelf{}"+format(i), self.shelf_dimensions, self.shelf_pose)
             shelves_heights += (height/num)
         
