@@ -128,9 +128,6 @@ class Manipulator:
             rospy.logerr('Invalid function name %s' % function_name)
             return "Invalid function name: {}".format(function_name)
 
-
-
-
     def add_box(self):
         box_name = self.box_name
         scene = self.scene
@@ -144,7 +141,7 @@ class Manipulator:
     
     def add_box_object(self, name, dimensions, pose):
         p = PoseStamped()
-        p.header.frame_id = "/map"
+        p.header.frame_id = "bookcase"
         p.header.stamp = rospy.Time.now()
         p.pose.position.x = pose[0]
         p.pose.position.y = pose[1]
@@ -164,7 +161,7 @@ class Manipulator:
         self.shelf_dimensions = [profundidade, largura, espessura]
         shelves_heights = 0
         for i in range(num+1):
-            self.shelf_pose = [pose.position.x, pose.position.y, shelves_heights, 0, 0, -0.6, 0.77]
+            self.shelf_pose = [pose.position.x, pose.position.y, shelves_heights, 0, 0, 0, 1]
             self.add_box_object("shelf{}"+format(i), self.shelf_dimensions, self.shelf_pose)
             shelves_heights += (height/num)
         
