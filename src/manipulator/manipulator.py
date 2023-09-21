@@ -77,6 +77,7 @@ class Manipulator:
             'pick': lambda pose: self.pick(pose),
             'place': lambda pose=None: self.place(),
             'place_bottom_shelf': lambda pose=None: self.execute_pose(self.arm, 'place_bottom_shelf'),
+            'hold_left_down': lambda pose=None: self.execute_pose(self.arm, 'hold_left_down'),
             '': lambda pose: self.go_to_coordinates(pose),
         }
 
@@ -98,7 +99,6 @@ class Manipulator:
             'point_rad': lambda id,position: self.point_rad(position),
             'point_pixel': lambda id,position: self.point_pixel(position),
             'add_shelfs': lambda id, position: self.add_shelfs(position),
-            'remove_shelfs': lambda id, position: self.remove_shelfs(),
         }
 
         try:
@@ -118,7 +118,8 @@ class Manipulator:
         pose = Pose(position=Point(self.coordinates.x, self.coordinates.y, self.coordinates.z), orientation=Quaternion(0.0,0.0,0.0,1.0))
 
         functions = {
-            'add_bookcase': lambda pose: self.add_bookcase(num, height, pose)
+            'add_bookcase': lambda pose: self.add_bookcase(num, height, pose),
+            'remove_all_objects': lambda pose=None: self.remove_all_objects()
         }
 
         try:
@@ -128,9 +129,6 @@ class Manipulator:
         except KeyError:
             rospy.logerr('Invalid function name %s' % function_name)
             return "Invalid function name: {}".format(function_name)
-
-
-
 
     def add_box(self):
         box_name = self.box_name
@@ -145,7 +143,7 @@ class Manipulator:
     
     def add_box_object(self, name, dimensions, pose):
         p = PoseStamped()
-        p.header.frame_id = "/map"
+        p.header.frame_id = "bookcase"
         p.header.stamp = rospy.Time.now()
         p.pose.position.x = pose[0]
         p.pose.position.y = pose[1]
@@ -165,7 +163,7 @@ class Manipulator:
         self.shelf_dimensions = [profundidade, largura, espessura]
         shelves_heights = 0
         for i in range(num+1):
-            self.shelf_pose = [pose.position.x, pose.position.y, shelves_heights, 0, 0, -0.6, 0.77]
+            self.shelf_pose = [pose.position.x, pose.position.y, shelves_heights, 0, 0, 0, 1]
             self.add_box_object("shelf{}"+format(i), self.shelf_dimensions, self.shelf_pose)
             shelves_heights += (height/num)
         
@@ -304,10 +302,8 @@ class Manipulator:
         scene.remove_world_object(box_name)
         return self.wait_for_state_update(box_is_attached=False, box_is_known=False, timeout=4)
     
-    def remove_shelfs(self):
-        self.scene.remove_world_object("shelf1")
-        self.scene.remove_world_object("shelf2")
-        self.scene.remove_world_object("shelf3")
+    def remove_all_objects(self):
+        self.scene.clear()
         return True
     
     def serving(self, side):
