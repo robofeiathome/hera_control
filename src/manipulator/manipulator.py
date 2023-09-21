@@ -64,6 +64,7 @@ class Manipulator:
             'attack': lambda pose=None: self.execute_pose(self.arm,'attack'),
             'open': lambda pose=None: self.execute_pose(self.hand,'open'),
             'close': lambda pose=None: self.execute_pose(self.hand,'close'),
+            'bottom_shelf': lambda pose=None: self.execute_pose(self.arm,'place_bottom_shelf'),
             'add_shelfs': lambda pose: self.add_shelfs(pose.position.x),
             'head_up': lambda pose=None: self.execute_pose(self.head,'up'),
             'head_down': lambda pose=None: self.execute_pose(self.head,'down'),
@@ -75,8 +76,8 @@ class Manipulator:
             'hold_left': lambda pose=None: self.execute_pose(self.arm, 'hold_left'),
             'hold_right': lambda pose=None: self.execute_pose(self.arm, 'hold_right'),
             'pick': lambda pose: self.pick(pose),
-            'place': lambda pose=None: self.place(),
-            'place_bottom_shelf': lambda pose=None: self.execute_pose(self.arm, 'place_bottom_shelf'),
+            'place': lambda pose=None: self.place('place'),
+            'place_bottom_shelf': lambda pose=None: self.place('place_bottom_shelf'),
             'hold_left_down': lambda pose=None: self.execute_pose(self.arm, 'hold_left_down'),
             '': lambda pose: self.go_to_coordinates(pose),
         }
@@ -119,7 +120,8 @@ class Manipulator:
 
         functions = {
             'add_bookcase': lambda pose: self.add_bookcase(num, height, pose),
-            'remove_all_objects': lambda pose=None: self.remove_all_objects()
+            'remove_all_objects': lambda pose=None: self.remove_all_objects(),
+            'remove_bookcase': lambda pose=None: self.remove_bookcase(num)
         }
 
         try:
@@ -256,11 +258,11 @@ class Manipulator:
     def pick(self,pose):
         self.execute_pose(self.hand,'open')
         self.clear_octomap()
-        self.addCylinder(self.box_name, 0.16, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
+        self.addCylinder(self.box_name, 0.18, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
         rospy.sleep(2)
         self.execute_pose(self.head, 'down')
         pose.position.z = 0.18
-        pose.position.x -= 0.19
+        pose.position.x -= 0.21
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
         self.execute_pose(self.head, 'up')
@@ -273,16 +275,16 @@ class Manipulator:
             return success2
         return success
 
-    def place(self):
+    def place(self, manip_pose):
         self.clear_octomap()
-        success = self.execute_pose(self.arm,'place')
+        success = self.execute_pose(self.arm, manip_pose)
         rospy.sleep(2)
         if success:
             self.detach_box()
             self.remove_box()
             self.execute_pose(self.hand,'open')
         return success
-    
+
     def point_pixel(self, pixel):
         self.execute_pose(self.hand, 'close')
         self.execute_pose(self.arm, 'point')
@@ -301,6 +303,13 @@ class Manipulator:
         scene = self.scene
         scene.remove_world_object(box_name)
         return self.wait_for_state_update(box_is_attached=False, box_is_known=False, timeout=4)
+
+    def remove_bookcase(self, num):
+        for i in range(num+1):
+            self.scene.remove_world_object("shelf{}"+format(i))
+        self.scene.remove_world_object("wall1")
+        self.scene.remove_world_object("wall2")
+        return True
     
     def remove_all_objects(self):
         self.scene.clear()
