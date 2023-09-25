@@ -65,6 +65,7 @@ class Manipulator:
             'open': lambda pose=None: self.execute_pose(self.hand,'open'),
             'close': lambda pose=None: self.execute_pose(self.hand,'close'),
             'bottom_shelf': lambda pose=None: self.execute_pose(self.arm,'place_bottom_shelf'),
+            'center_shelf': lambda pose=None: self.execute_pose(self.arm,'pick_bottom_shelf'),
             'add_shelfs': lambda pose: self.add_shelfs(pose.position.x),
             'head_up': lambda pose=None: self.execute_pose(self.head,'up'),
             'head_down': lambda pose=None: self.execute_pose(self.head,'down'),
