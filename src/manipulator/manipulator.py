@@ -43,9 +43,9 @@ class Manipulator:
         self.tf = tf.TransformListener()
         self.tf.waitForTransform('manip_base_link', 'torso', rospy.Time(), rospy.Duration(1.0))
 
-        # self.execute_pose(self.arm,'home')
-        # self.execute_pose(self.hand,'open')
-        # self.execute_pose(self.head,'up')
+        self.execute_pose(self.head,'up')
+        self.execute_pose(self.arm,'home')
+        self.execute_pose(self.hand,'open')
  
 
         self.box_name = "box"
