@@ -160,7 +160,7 @@ class Manipulator:
     
     def add_bookcase(self, num, height, pose):
         largura = 0.925
-        espessura = 0.02
+        espessura = 0.03
         profundidade = 0.45
 
         self.shelf_dimensions = [profundidade, largura, espessura]
@@ -263,7 +263,7 @@ class Manipulator:
         rospy.sleep(2)
         self.execute_pose(self.head, 'down')
         pose.position.z = 0.18
-        pose.position.x -= 0.21
+        pose.position.x -= 0.12
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
         self.execute_pose(self.head, 'up')
