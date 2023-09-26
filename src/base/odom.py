@@ -73,7 +73,7 @@ class Odom():
 
         # Mecanum Inverse Kinematics
         vx = (v1 + v2 + v3 + v4) / 4
-        vy = (- v1 + v2 + v3 - v4) / 4
+        vy = (v1 + v2 - v3 - v4) / 4
         vth = (- v1 + v2 - v3 + v4) / (4 * (Odom.WHEEL_DISTANCE_X + Odom.WHEEL_DISTANCE_Y))
 
         # Error Correction
