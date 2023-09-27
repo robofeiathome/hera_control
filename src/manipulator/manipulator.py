@@ -59,9 +59,7 @@ class Manipulator:
 
 
         functions = {
-            'reset': lambda pose=None: self.execute_pose(self.arm,'reset'),
-            'home': lambda pose=None: self.execute_pose(self.arm,'home'),
-            'attack': lambda pose=None: self.execute_pose(self.arm,'attack'),
+            function_name: lambda pose=None: self.execute_pose(self.arm,function_name),
             'open': lambda pose=None: self.execute_pose(self.hand,'open'),
             'close': lambda pose=None: self.execute_pose(self.hand,'close'),
             'bottom_shelf': lambda pose=None: self.execute_pose(self.arm,'place_bottom_shelf'),
@@ -74,12 +72,9 @@ class Manipulator:
             'serving_cereal_right': lambda pose=None: self.serving_cereal('right'),
             'serving_cereal_left': lambda pose=None: self.serving_cereal('left'),
             'serving_left': lambda pose=None: self.serving('left'),
-            'hold_left': lambda pose=None: self.execute_pose(self.arm, 'hold_left'),
-            'hold_right': lambda pose=None: self.execute_pose(self.arm, 'hold_right'),
             'pick': lambda pose: self.pick(pose),
             'place': lambda pose=None: self.place('place'),
             'place_bottom_shelf': lambda pose=None: self.place('place_bottom_shelf'),
-            'hold_left_down': lambda pose=None: self.execute_pose(self.arm, 'hold_left_down'),
             '': lambda pose: self.go_to_coordinates(pose),
         }
 
@@ -375,7 +370,7 @@ class Manipulator:
 
 if __name__ == '__main__':
     moveit_commander.roscpp_initialize(sys.argv)
-    rospy.init_node('manipulator', log_level=rospy.INFO)
+    rospy.init_node('manipulator', log_level=rospy.ERROR)
     Manipulator()
 
     try:
