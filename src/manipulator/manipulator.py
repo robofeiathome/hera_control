@@ -62,6 +62,7 @@ class Manipulator:
             function_name: lambda pose=None: self.execute_pose(self.arm,function_name),
             'open': lambda pose=None: self.execute_pose(self.hand,'open'),
             'close': lambda pose=None: self.execute_pose(self.hand,'close'),
+            'ground': lambda pose=None: self.execute_pose(self.head,'ground'),
             'bottom_shelf': lambda pose=None: self.execute_pose(self.arm,'place_bottom_shelf'),
             'center_shelf': lambda pose=None: self.execute_pose(self.arm,'pick_center_shelf'),
             'add_shelfs': lambda pose: self.add_shelfs(pose.position.x),
@@ -73,6 +74,7 @@ class Manipulator:
             'serving_cereal_left': lambda pose=None: self.serving_cereal('left'),
             'serving_left': lambda pose=None: self.serving('left'),
             'pick': lambda pose: self.pick(pose),
+            'close_with_box': lambda pose=None: self.close_with_box(),
             'place': lambda pose=None: self.place('place'),
             'place_bottom_shelf': lambda pose=None: self.place('place_bottom_shelf'),
             '': lambda pose: self.go_to_coordinates(pose),
@@ -250,6 +252,13 @@ class Manipulator:
         group.set_joint_value_target(values)
         success = group.go(wait=True)
         return success
+
+    def close_with_box(self):
+        self.clear_octomap()
+        self.addCylinder(self.box_name, 0.18, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
+        self.attach_box()
+        self.execute_pose(self.hand,'close')
+        return True
 
     def pick(self,pose):
         self.execute_pose(self.hand,'open')
