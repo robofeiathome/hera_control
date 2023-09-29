@@ -8,7 +8,7 @@ class Poses():
         self.pose_name = str(input("Pose_name:"))
 
         rospy.Subscriber('/joint_states', JointState, self.callback_positions)
-        self.file_path = '/home/flora/Workspace/catkin_ws/src/hera_robot/hera_moveit_config/config/hera.srdf'
+        self.file_path = '/home/robofei/Workspace/catkin_ws/src/hera_robot/hera_moveit_config/config/hera.srdf'
 
         # Initialize self.pose_message
         self.pose_message = ""
