@@ -67,6 +67,7 @@ class Manipulator:
             'center_shelf': lambda pose=None: self.execute_pose(self.arm,'pick_center_shelf'),
             'add_shelfs': lambda pose: self.add_shelfs(pose.position.x),
             'head_up': lambda pose=None: self.execute_pose(self.head,'up'),
+            'center_shelf': lambda pose=None: self.execute_pose(self.head,'center_shelf'),
             'head_down': lambda pose=None: self.execute_pose(self.head,'down'),
             'way_down': lambda pose=None: self.execute_pose(self.head,'way_down'),
             'serving_right': lambda pose=None: self.serving('right'),
