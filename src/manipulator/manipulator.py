@@ -157,9 +157,9 @@ class Manipulator:
         self.scene.add_box(name, p, (dimensions[0], dimensions[1], dimensions[2]))
     
     def add_bookcase(self, num, height, pose):
-        largura = 0.925
+        largura = 0.93
         espessura = 0.03
-        profundidade = 0.45
+        profundidade = 0.27
 
         self.shelf_dimensions = [profundidade, largura, espessura]
         shelves_heights = 0
@@ -267,7 +267,7 @@ class Manipulator:
         self.addCylinder(self.box_name, 0.18, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
         rospy.sleep(2)
         self.execute_pose(self.head, 'down')
-        pose.position.z = 0.19
+        pose.position.z = 0.15
         pose.position.x -= 0.11
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
