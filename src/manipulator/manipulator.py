@@ -61,7 +61,9 @@ class Manipulator:
         functions = {
             function_name: lambda pose=None: self.execute_pose(self.arm,function_name),
             'open': lambda pose=None: self.execute_pose(self.hand,'open'),
-            'close': lambda pose=None: self.execute_pose(self.hand,'close'),
+            'soft_close': lambda pose=None: self.execute_pose(self.hand,'soft_close'),
+            'hard_close': lambda pose=None: self.execute_pose(self.hand,'hard_close'),
+            'super_soft_close': lambda pose=None: self.execute_pose(self.hand,'super_soft_close'),
             'ground': lambda pose=None: self.execute_pose(self.head,'ground'),
             'bottom_shelf': lambda pose=None: self.execute_pose(self.arm,'place_bottom_shelf'),
             'center_shelf': lambda pose=None: self.execute_pose(self.arm,'pick_center_shelf'),
@@ -76,6 +78,7 @@ class Manipulator:
             'serving_left': lambda pose=None: self.serving('left'),
             'pick_hard_close': lambda pose: self.pick(pose,'hard_close'),
             'pick_soft_close': lambda pose: self.pick(pose,'soft_close'),
+            'pick_super_soft_close': lambda pose: self.pick(pose,'super_soft_close'),
             'close_with_box': lambda pose=None: self.close_with_box(),
             'place': lambda pose=None: self.place('place'),
             'place_bottom_shelf': lambda pose=None: self.place('place_bottom_shelf'),
