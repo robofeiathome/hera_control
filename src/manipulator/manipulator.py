@@ -74,7 +74,8 @@ class Manipulator:
             'serving_cereal_right': lambda pose=None: self.serving_cereal('right'),
             'serving_cereal_left': lambda pose=None: self.serving_cereal('left'),
             'serving_left': lambda pose=None: self.serving('left'),
-            'pick': lambda pose: self.pick(pose),
+            'pick_hard_close': lambda pose: self.pick(pose,'hard_close'),
+            'pick_soft_close': lambda pose: self.pick(pose,'soft_close'),
             'close_with_box': lambda pose=None: self.close_with_box(),
             'place': lambda pose=None: self.place('place'),
             'place_bottom_shelf': lambda pose=None: self.place('place_bottom_shelf'),
@@ -261,7 +262,7 @@ class Manipulator:
         self.execute_pose(self.hand,'close')
         return True
 
-    def pick(self,pose):
+    def pick(self,pose,hand_pose):
         self.execute_pose(self.hand,'open')
         self.clear_octomap()
         self.addCylinder(self.box_name, 0.18, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
@@ -276,7 +277,7 @@ class Manipulator:
         success = self.arm.go(wait=True)
         if success:
             self.attach_box()
-            success2 = self.execute_pose(self.hand,'close')
+            success2 = self.execute_pose(self.hand, hand_pose)
             # self.execute_pose(self.arm,'attack')
             return success2
         return success
