@@ -61,6 +61,7 @@ class Manipulator:
         functions = {
             function_name: lambda pose=None: self.execute_pose(self.arm,function_name),
             'open': lambda pose=None: self.execute_pose(self.hand,'open'),
+            'half_open': lambda pose=None: self.execute_pose(self.hand,'half_open'),
             'soft_close': lambda pose=None: self.execute_pose(self.hand,'soft_close'),
             'hard_close': lambda pose=None: self.execute_pose(self.hand,'hard_close'),
             'super_soft_close': lambda pose=None: self.execute_pose(self.hand,'super_soft_close'),
@@ -292,7 +293,10 @@ class Manipulator:
         if success:
             self.detach_box()
             self.remove_box()
+            self.execute_pose(self.hand,'half_open')
+            rospy.sleep(1)
             self.execute_pose(self.hand,'open')
+
         return success
 
     def point_pixel(self, pixel):
