@@ -82,8 +82,10 @@ class Manipulator:
             'pick_super_soft_close': lambda pose: self.pick(pose,'super_soft_close'),
             'close_with_box': lambda pose=None: self.close_with_box(),
             'place': lambda pose=None: self.place('place'),
-            'place_table': lambda pose=None: self.place_table(),
-            'place_counter': lambda pose=None: self.place_counter(),
+            'place_kitchen_table': lambda pose=None: self.place('place_kitchen_table'),
+            'place_counter': lambda pose=None: self.place('place_counter'),
+            'place_dinner_table': lambda pose=None: self.place('place_dinner_table'),
+            'place_livingroom_table': lambda pose=None: self.place('place_livingroom_table'),
             'place_bottom_shelf': lambda pose=None: self.place('place_bottom_shelf'),
             '': lambda pose: self.go_to_coordinates(pose),
         }
@@ -285,31 +287,6 @@ class Manipulator:
             success2 = self.execute_pose(self.hand, hand_pose)
             # self.execute_pose(self.arm,'attack')
             return success2
-        return success
-
-    def place_table(self):
-        self.clear_octomap()
-        success = self.execute_pose(self.arm, 'place_table')
-        rospy.sleep(2)
-        if success:
-            self.detach_box()
-            self.remove_box()
-            self.execute_pose(self.hand,'half_open')
-            rospy.sleep(1)
-            self.execute_pose(self.hand,'open')
-        return success
-
-
-    def place_counter(self):
-        self.clear_octomap()
-        success = self.execute_pose(self.arm, 'place_counter')
-        rospy.sleep(2)
-        if success:
-            self.detach_box()
-            self.remove_box()
-            self.execute_pose(self.hand,'half_open')
-            rospy.sleep(1)
-            self.execute_pose(self.hand,'open')
         return success
 
     def place(self, manip_pose):
