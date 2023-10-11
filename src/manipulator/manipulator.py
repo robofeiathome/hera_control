@@ -25,6 +25,8 @@ class Manipulator:
         self.hand = moveit_commander.MoveGroupCommander('gripper')
         self.hand.set_max_acceleration_scaling_factor(1.0)
         self.hand.set_max_velocity_scaling_factor(1.0)
+        self.arm.set_max_velocity_scaling_factor(1.0)
+        self.arm.set_max_acceleration_scaling_factor(1.0)
         self.head = moveit_commander.MoveGroupCommander("zed")
         self.head.set_max_acceleration_scaling_factor(1.0)
         self.head.set_max_velocity_scaling_factor(1.0)
@@ -61,7 +63,7 @@ class Manipulator:
         functions = {
             function_name: lambda pose=None: self.execute_pose(self.arm,function_name),
             'open': lambda pose=None: self.execute_pose(self.hand,'open'),
-            'close': lambda pose=None: self.execute_pose(self.hand,'close'),
+            'close': lambda pose=None: self.execute_pose(self.hand,'hard_close'),
             'ground': lambda pose=None: self.execute_pose(self.head,'ground'),
             'bottom_shelf': lambda pose=None: self.execute_pose(self.arm,'place_bottom_shelf'),
             'center_shelf': lambda pose=None: self.execute_pose(self.arm,'pick_center_shelf'),
@@ -292,14 +294,14 @@ class Manipulator:
         return success
 
     def point_pixel(self, pixel):
-        self.execute_pose(self.hand, 'close')
+        self.execute_pose(self.hand, 'hard_close')
         self.execute_pose(self.arm, 'point')
         x = ((-1.55/1920)*pixel) + 0.775
         self.move_joint(1, x)
         return True
 
     def point_rad(self,angle):
-        self.execute_pose(self.hand, 'close')
+        self.execute_pose(self.hand, 'hard_close')
         self.execute_pose(self.arm, 'point')
         self.move_joint(1, angle)
         return True    
