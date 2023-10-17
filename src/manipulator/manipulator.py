@@ -77,6 +77,7 @@ class Manipulator:
             'pick': lambda pose: self.pick(pose),
             'close_with_box': lambda pose=None: self.close_with_box(),
             'place': lambda pose=None: self.place('place'),
+            'place_dinner_table': lambda pose=None: self.place('place_dinner_table'),
             'place_bottom_shelf': lambda pose=None: self.place('place_bottom_shelf'),
             '': lambda pose: self.go_to_coordinates(pose),
         }
@@ -276,7 +277,7 @@ class Manipulator:
         success = self.arm.go(wait=True)
         if success:
             self.attach_box()
-            success2 = self.execute_pose(self.hand,'close')
+            success2 = self.execute_pose(self.hand,'hard_close')
             # self.execute_pose(self.arm,'attack')
             return success2
         return success
