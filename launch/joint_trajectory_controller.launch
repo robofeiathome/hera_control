@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="sim" default="false"/>
+    <arg name="rviz" default="true"/>
+    <arg name="usb_port" default="/dev/opencm"/>
+
+    <!-- HW Controller -->
+    <group unless="$(arg sim)">
+        <include file="$(find hera_hw)/launch/motors_control.launch">
+            <arg name="usb_port" value="$(arg usb_port)"/>
+        </include>
+    </group>
+
+    <group if="$(arg sim)">
+        <include file="$(find hera_hw)/launch/motors_control_gazebo.launch"/>
+    </group>
+
+    <!-- Controller Utils -->
+    <include file="$(find hera_hw)/launch/controller_utils.launch"/>
+
+    <!-- Joint Trajectory Controller -->
+    <group unless="$(arg sim)">
+        <rosparam file="$(find hera_control)/config/joint_trajectory_controller.yaml" command="load"/>
+    </group>
+
+    <group if="$(arg sim)">
+        <rosparam file="$(find hera_control)/config/joint_trajectory_controller_gazebo.yaml" command="load"/>
+    </group>
+
+    <!-- Arm Controller -->
+    <node name="arm_controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"
+          args="arm_controller"/>
+
+    <!-- Gripper Controller -->
+    <node name="gripper_controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"
+          args="gripper_controller"/>
+
+    <!-- Camera Controller -->
+    <node name="camera_controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"
+          args="camera_controller"/>
+
+    <!-- MoveIt -->
+    <include file="$(find hera_moveit_config)/launch/move_group.launch"/>
+
+    <!-- Rviz -->
+    <group if="$(arg rviz)">
+        <include file="$(find hera_moveit_config)/launch/moveit_rviz.launch"/>
+    </group>
+
+</launch>
