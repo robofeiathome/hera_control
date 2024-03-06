@@ -63,7 +63,9 @@ class Manipulator:
         functions = {
             function_name: lambda pose=None: self.execute_pose(self.arm,function_name),
             'open': lambda pose=None: self.execute_pose(self.hand,'open'),
-            'close': lambda pose=None: self.execute_pose(self.hand,'hard_close'),
+            'soft_close': lambda pose=None: self.execute_pose(self.hand,'soft_close'),
+            'hard_close': lambda pose=None: self.execute_pose(self.hand,'hard_close'),
+            'mid_close': lambda pose=None: self.execute_pose(self.hand,'mid_close'),
             'ground': lambda pose=None: self.execute_pose(self.head,'ground'),
             'bottom_shelf': lambda pose=None: self.execute_pose(self.arm,'place_bottom_shelf'),
             'center_shelf': lambda pose=None: self.execute_pose(self.arm,'pick_center_shelf'),
@@ -79,6 +81,7 @@ class Manipulator:
             'pick': lambda pose: self.pick(pose),
             'close_with_box': lambda pose=None: self.close_with_box(),
             'place': lambda pose=None: self.place('place'),
+            'place_coordinates': lambda pose: self.place_coordinates(pose),
             'place_dinner_table': lambda pose=None: self.place('place_dinner_table'),
             'place_bottom_shelf': lambda pose=None: self.place('place_bottom_shelf'),
             '': lambda pose: self.go_to_coordinates(pose),
@@ -261,7 +264,7 @@ class Manipulator:
         self.clear_octomap()
         self.addCylinder(self.box_name, 0.18, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
         self.attach_box()
-        self.execute_pose(self.hand,'close')
+        self.execute_pose(self.hand,'mid_close')
         return True
 
     def pick(self,pose):
@@ -271,7 +274,7 @@ class Manipulator:
         rospy.sleep(2)
         self.execute_pose(self.head, 'down')
         pose.position.z = 0.15
-        pose.position.x -= 0.11
+        pose.position.x -= 0.145
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
         self.execute_pose(self.head, 'up')
@@ -279,7 +282,7 @@ class Manipulator:
         success = self.arm.go(wait=True)
         if success:
             self.attach_box()
-            success2 = self.execute_pose(self.hand,'hard_close')
+            success2 = self.execute_pose(self.hand,'mid_close')
             # self.execute_pose(self.arm,'attack')
             return success2
         return success
@@ -292,6 +295,18 @@ class Manipulator:
             self.detach_box()
             self.remove_box()
             self.execute_pose(self.hand,'open')
+        return success
+    
+    def place_coordinates(self, pose):
+        self.clear_octomap()
+        target_pose = copy.deepcopy(pose)
+        self.arm.set_pose_target(target_pose)
+        self.execute_pose(self.head, 'up')
+        rospy.sleep(1)
+        success = self.arm.go(wait=True)
+        if success:
+            self.detach_box()
+            self.remove_box()
         return success
 
     def point_pixel(self, pixel):
