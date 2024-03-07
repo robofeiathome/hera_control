@@ -27,7 +27,7 @@ class Manipulator:
         self.hand.set_max_velocity_scaling_factor(1.0)
         self.arm.set_max_velocity_scaling_factor(1.0)
         self.arm.set_max_acceleration_scaling_factor(1.0)
-        self.head = moveit_commander.MoveGroupCommander("zed")
+        self.head = moveit_commander.MoveGroupCommander("head")
         self.head.set_max_acceleration_scaling_factor(1.0)
         self.head.set_max_velocity_scaling_factor(1.0)
 

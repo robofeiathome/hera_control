@@ -68,12 +68,12 @@ class Poses():
         <joint name="gripper_left_joint" value="'+ str(msg.position[2]) +'"/>\n\
         <joint name="gripper_right_joint" value="'+ str(msg.position[3]) +'"/>\n\
     </group_state>\n    '
-        elif self.group == 'zed':
+        elif self.group == 'head':
             self.pose_message = '<group_state name="'+ self.pose_name +'" group="'+ self.group +'">\n\
         <joint name="joint_torso_to_torso_sensor_plat" value="'+ str(msg.position[4]) +'"/>\n\
     </group_state>\n    '
         else:
-            print("Invalid group, please try again. The existing groups are:\nmanipulator\ngripper\nzed")
+            print("Invalid group, please try again. The existing groups are:\nmanipulator\ngripper\nhead")
         if not self.file_written: self.writing_file()
 
 if __name__ == "__main__":
