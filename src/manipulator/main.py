@@ -18,12 +18,12 @@ class Manipulator:
         self.hand = moveit_commander.MoveGroupCommander('gripper')
         self.hand.set_max_acceleration_scaling_factor(1.0)
         self.hand.set_max_velocity_scaling_factor(1.0)
-        self.head = moveit_commander.MoveGroupCommander("zed")
+        self.head = moveit_commander.MoveGroupCommander('head')
         self.head.set_max_acceleration_scaling_factor(1.0)
         self.head.set_max_velocity_scaling_factor(1.0)
 
-        self.display_trajectory_publisher = rospy.Publisher("/move_group_arm/display_planned_path",
-                                                            moveit_msgs.msg.DisplayTrajectory, queue_size=20)
+        self.clear_octomap = rospy.ServiceProxy('/clear_octomap', Empty_srv)
+        self.display_trajectory_publisher = rospy.Publisher("/move_group_arm/display_planned_path", moveit_msgs.msg.DisplayTrajectory, queue_size=20)
         self._pub = rospy.Publisher('collision_object', CollisionObject, queue_size=10)
 
         self.tf = tf.TransformListener()
@@ -44,8 +44,12 @@ class Manipulator:
 if __name__ == '__main__':
     moveit_commander.roscpp_initialize(sys.argv)
     rospy.init_node('manipulator', log_level=rospy.ERROR)
-    Manipulator()
-
+    manipulator = Manipulator()
+    Poses(manipulator)
+    Joints(manipulator)
+    Furniture(manipulator)
+    Motions(manipulator)
+    
     try:
         rospy.spin()
     except rospy.ROSInterruptException:
