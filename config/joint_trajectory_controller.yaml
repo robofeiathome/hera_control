@@ -39,7 +39,7 @@ gripper_controller:
     state_publish_rate: 25
     action_monitor_rate: 10
 
-camera_controller:
+head_controller:
     type: position_controllers/JointTrajectoryController
     joints:
         - joint_torso_to_torso_sensor_plat
