@@ -27,7 +27,7 @@ class Manipulator:
         self.hand.set_max_velocity_scaling_factor(1.0)
         self.arm.set_max_velocity_scaling_factor(1.0)
         self.arm.set_max_acceleration_scaling_factor(1.0)
-        self.head = moveit_commander.MoveGroupCommander("head")
+        self.head = moveit_commander.MoveGroupCommander("camera")
         self.head.set_max_acceleration_scaling_factor(1.0)
         self.head.set_max_velocity_scaling_factor(1.0)
 
@@ -238,11 +238,12 @@ class Manipulator:
         return success
 
     def move_joint(self,id,position):
-        if id == 9:
-            id = 0
+        if id == 9 or id == 10:
+            id -= 9
             group = self.head
-            position = 0 if position >= 0.0 else position
-            position = -1.5 if position <= -1.5 else position
+            if id == 9:
+                position = 0.3 if position >= 0.3 else position
+                position = -2.0 if position <= -2.0 else position
             
         elif id == 7 or id == 8:
             id-=1
@@ -252,6 +253,8 @@ class Manipulator:
             group = self.arm
 
         values = group.get_current_joint_values()
+        # rospy.logerr("AAAAAAAAAA VALUES:")
+        # rospy.logerr(values)
         values[id] = position
         group.set_joint_value_target(values)
         success = group.go(wait=True)
@@ -299,12 +302,14 @@ class Manipulator:
         self.execute_pose(self.arm, 'point')
         x = ((-1.55/1920)*pixel) + 0.775
         self.move_joint(1, x)
+        self.move_joint(10, x)
         return True
 
     def point_rad(self,angle):
         self.execute_pose(self.hand, 'hard_close')
         self.execute_pose(self.arm, 'point')
         self.move_joint(1, angle)
+        self.move_joint(10, angle)
         return True    
 
     def remove_box(self, timeout=4):
