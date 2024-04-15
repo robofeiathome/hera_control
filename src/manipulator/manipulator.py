@@ -8,7 +8,7 @@ import moveit_commander
 import moveit_msgs.msg
 from moveit_msgs.msg import CollisionObject, AttachedCollisionObject
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
-from hera_control.srv import Manip_service, Joint_service, Furniture
+from hera_control.srv import Manip_service, Joint_service, Furniture, Look_for_person
 from std_srvs.srv import Empty as Empty_srv
 from shape_msgs.msg import MeshTriangle, Mesh, SolidPrimitive, Plane
 from hera_face.srv import face_list
@@ -46,6 +46,7 @@ class Manipulator:
         rospy.Service('manipulator', Manip_service, self.handler)
         rospy.Service('joint_command', Joint_service, self.joints_handler)
         rospy.Service('adding_furniture', Furniture, self.adding_furniture)
+        rospy.Service('look_for_person',Look_for_person,self.look_handler)
         self.tf = tf.TransformListener()
         self.tf.waitForTransform('manip_base_link', 'torso', rospy.Time(), rospy.Duration(1.0))
 
@@ -116,6 +117,16 @@ class Manipulator:
         except KeyError:
             rospy.logerr('Invalid function name %s' % function_name)
             return "Invalid function name: {}".format(function_name)
+        
+    def look_handler(self, request):
+        name = request.name
+        try:
+            result = self.look_for_person(name)
+            return str(result)
+
+        except KeyError:
+            rospy.logerr('Invalid function request')
+            return "Invalid function request"
         
     def adding_furniture(self, request):
         function_name = request.type

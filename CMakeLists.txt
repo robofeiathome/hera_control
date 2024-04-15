@@ -38,6 +38,7 @@ add_service_files(
   Joint_service.srv
   Furniture.srv
   Raposo_service.srv
+  Look_for_person.srv
 )
 
 generate_messages(
