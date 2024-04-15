@@ -15,8 +15,6 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_core
   moveit_ros_planning
   moveit_ros_planning_interface
-  dynamixel_workbench_msgs
-  dynamixel_workbench_toolbox
   tf
   message_generation
 )

@@ -9,7 +9,7 @@
     </group> -->
 
     <!-- Controller Utils -->
-    <include file="$(find hera_hw)/launch/controller_utils.launch"/>
+    <!-- <include file="$(find hera_hw)/launch/controller_utils.launch"/> -->
 
     <!-- Joint Trajectory Controller -->
     <group unless="$(arg simulation)">
