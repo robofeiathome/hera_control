@@ -11,6 +11,8 @@ from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 from hera_control.srv import Manip_service, Joint_service, Furniture
 from std_srvs.srv import Empty as Empty_srv
 from shape_msgs.msg import MeshTriangle, Mesh, SolidPrimitive, Plane
+from hera_face.srv import face_list
+
 
 
 class Manipulator:
@@ -35,6 +37,8 @@ class Manipulator:
 
 
         self.clear_octomap = rospy.ServiceProxy('/clear_octomap', Empty_srv)
+        self.recog_face = rospy.ServiceProxy('/face_recog', face_list)
+
         self.display_trajectory_publisher = rospy.Publisher("/move_group_arm/display_planned_path", moveit_msgs.msg.DisplayTrajectory, queue_size=20)  
         self._pub = rospy.Publisher('collision_object',CollisionObject,queue_size=10)
 
@@ -65,6 +69,7 @@ class Manipulator:
             'open': lambda pose=None: self.execute_pose(self.hand,'open'),
             'close': lambda pose=None: self.execute_pose(self.hand,'hard_close'),
             'ground': lambda pose=None: self.execute_pose(self.head,'ground'),
+            'look_for_person': lambda pose=None: self.look_for_person(function_name),
             'bottom_shelf': lambda pose=None: self.execute_pose(self.arm,'place_bottom_shelf'),
             'center_shelf': lambda pose=None: self.execute_pose(self.arm,'pick_center_shelf'),
             'add_shelfs': lambda pose: self.add_shelfs(pose.position.x),
@@ -253,12 +258,39 @@ class Manipulator:
             group = self.arm
 
         values = group.get_current_joint_values()
-        # rospy.logerr("AAAAAAAAAA VALUES:")
-        # rospy.logerr(values)
         values[id] = position
         group.set_joint_value_target(values)
         success = group.go(wait=True)
         return success
+    
+    def look_for_person(self, name):
+        person_found = False
+        motor_position = 0.0  # Início na posição central 0.0
+        increment = 0.05  # Incremento/decremento por passo
+
+        # Primeiro, tenta girar à direita até 0.6
+        while not person_found or motor_position <= 0.6:
+            resp = self.recog_face(name)
+            if 860 <= resp.center <= 1060:  # Verifica se a pessoa está no centro da câmera
+                self.point_pixel(resp.center)
+                person_found = True
+            else:
+                motor_position += increment  # Move o motor para a direita
+                self.move_joint(motor_position)
+
+        # Se não encontrou, começa a girar para a esquerda até -0.6
+        motor_position = 0.0  # Restaura a posição central antes de ir para a esquerda
+        while not person_found or motor_position >= -0.6:
+            resp = self.recog_face(name)
+            if 860 <= resp.center <= 1060:
+                self.point_pixel(resp.center)
+                person_found = True
+            else:
+                motor_position -= increment  # Move o motor para a esquerda
+                self.move_joint(motor_position)
+
+        return person_found
+
 
     def close_with_box(self):
         self.clear_octomap()
