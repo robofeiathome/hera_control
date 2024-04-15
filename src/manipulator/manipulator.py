@@ -75,6 +75,7 @@ class Manipulator:
             'center_shelf': lambda pose=None: self.execute_pose(self.arm,'pick_center_shelf'),
             'add_shelfs': lambda pose: self.add_shelfs(pose.position.x),
             'head_up': lambda pose=None: self.execute_pose(self.head,'up'),
+            'way_up': lambda pose=None: self.move_joint(9, 0.3),
             'center_shelf': lambda pose=None: self.execute_pose(self.head,'center_shelf'),
             'head_down': lambda pose=None: self.execute_pose(self.head,'down'),
             'way_down': lambda pose=None: self.execute_pose(self.head,'way_down'),
@@ -122,11 +123,11 @@ class Manipulator:
         name = request.name
         try:
             result = self.look_for_person(name)
-            return str(result)
+            return result
 
         except KeyError:
             rospy.logerr('Invalid function request')
-            return "Invalid function request"
+            return False
         
     def adding_furniture(self, request):
         function_name = request.type
@@ -275,33 +276,37 @@ class Manipulator:
         return success
     
     def look_for_person(self, name):
+        self.move_joint(10, 0.0)
         person_found = False
         motor_position = 0.0  # Início na posição central 0.0
         increment = 0.05  # Incremento/decremento por passo
 
         # Primeiro, tenta girar à direita até 0.6
-        while not person_found or motor_position <= 0.6:
+        while not person_found and motor_position <= 0.35:
             resp = self.recog_face(name)
-            if 860 <= resp.center <= 1060:  # Verifica se a pessoa está no centro da câmera
-                self.point_pixel(resp.center)
+            center = resp.centers[0] if len(resp.centers) != 0 else 0.0
+            if 540 <= center <= 740:  # Verifica se a pessoa está no centro da câmera
+                self.point_pixel(center)
                 person_found = True
+                break
             else:
                 motor_position += increment  # Move o motor para a direita
-                self.move_joint(motor_position)
+                self.move_joint(10, motor_position)
 
         # Se não encontrou, começa a girar para a esquerda até -0.6
         motor_position = 0.0  # Restaura a posição central antes de ir para a esquerda
-        while not person_found or motor_position >= -0.6:
+        while not person_found and motor_position >= -0.35:
             resp = self.recog_face(name)
-            if 860 <= resp.center <= 1060:
-                self.point_pixel(resp.center)
+            center = resp.centers[0] if len(resp.centers) != 0 else 0.0
+            if 540 <= center <= 740:
+                self.point_pixel(center)
                 person_found = True
+                break
             else:
                 motor_position -= increment  # Move o motor para a esquerda
-                self.move_joint(motor_position)
+                self.move_joint(10, motor_position)
 
         return person_found
-
 
     def close_with_box(self):
         self.clear_octomap()
@@ -343,7 +348,7 @@ class Manipulator:
     def point_pixel(self, pixel):
         self.execute_pose(self.hand, 'hard_close')
         self.execute_pose(self.arm, 'point')
-        x = ((-1.55/1920)*pixel) + 0.775
+        x = ((-1.55/1280)*pixel) + 0.775
         self.move_joint(1, x)
         self.move_joint(10, x)
         return True
