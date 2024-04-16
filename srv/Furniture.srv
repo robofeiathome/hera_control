@@ -1,0 +1,6 @@
+string type
+int32 num
+float64 height
+Manip_Goal goal
+---
+string result

@@ -8,9 +8,11 @@ import moveit_commander
 import moveit_msgs.msg
 from moveit_msgs.msg import CollisionObject, AttachedCollisionObject
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
-from hera_control.srv import Manip_service, Joint_service
+from hera_control.srv import Manip_service, Joint_service, Furniture, Look_for_person
 from std_srvs.srv import Empty as Empty_srv
 from shape_msgs.msg import MeshTriangle, Mesh, SolidPrimitive, Plane
+from hera_face.srv import face_list
+
 
 
 class Manipulator:
@@ -20,12 +22,14 @@ class Manipulator:
         moveit_commander.roscpp_initialize(sys.argv)
         self.robot = moveit_commander.RobotCommander()
         self.scene = moveit_commander.PlanningSceneInterface()
-        self.arm = moveit_commander.MoveGroupCommander('manipulator')
+        self.arm = moveit_commander.MoveGroupCommander('arm')
         self.arm.set_pose_reference_frame('manip_base_link')
         self.hand = moveit_commander.MoveGroupCommander('gripper')
         self.hand.set_max_acceleration_scaling_factor(1.0)
         self.hand.set_max_velocity_scaling_factor(1.0)
-        self.head = moveit_commander.MoveGroupCommander("zed")
+        self.arm.set_max_velocity_scaling_factor(1.0)
+        self.arm.set_max_acceleration_scaling_factor(1.0)
+        self.head = moveit_commander.MoveGroupCommander("camera")
         self.head.set_max_acceleration_scaling_factor(1.0)
         self.head.set_max_velocity_scaling_factor(1.0)
 
@@ -33,18 +37,22 @@ class Manipulator:
 
 
         self.clear_octomap = rospy.ServiceProxy('/clear_octomap', Empty_srv)
+        self.recog_face = rospy.ServiceProxy('/face_recog', face_list)
+
         self.display_trajectory_publisher = rospy.Publisher("/move_group_arm/display_planned_path", moveit_msgs.msg.DisplayTrajectory, queue_size=20)  
         self._pub = rospy.Publisher('collision_object',CollisionObject,queue_size=10)
 
 
         rospy.Service('manipulator', Manip_service, self.handler)
         rospy.Service('joint_command', Joint_service, self.joints_handler)
+        rospy.Service('adding_furniture', Furniture, self.adding_furniture)
+        rospy.Service('look_for_person',Look_for_person,self.look_handler)
         self.tf = tf.TransformListener()
         self.tf.waitForTransform('manip_base_link', 'torso', rospy.Time(), rospy.Duration(1.0))
 
+        self.execute_pose(self.head,'up')
         self.execute_pose(self.arm,'home')
         self.execute_pose(self.hand,'open')
-        self.execute_pose(self.head,'up')
  
 
         self.box_name = "box"
@@ -58,22 +66,28 @@ class Manipulator:
 
 
         functions = {
-            'reset': lambda pose=None: self.execute_pose(self.arm,'reset'),
-            'home': lambda pose=None: self.execute_pose(self.arm,'home'),
-            'attack': lambda pose=None: self.execute_pose(self.arm,'attack'),
+            function_name: lambda pose=None: self.execute_pose(self.arm,function_name),
             'open': lambda pose=None: self.execute_pose(self.hand,'open'),
-            'close': lambda pose=None: self.execute_pose(self.hand,'close'),
+            'close': lambda pose=None: self.execute_pose(self.hand,'hard_close'),
+            'ground': lambda pose=None: self.execute_pose(self.head,'ground'),
+            'look_for_person': lambda pose=None: self.look_for_person(function_name),
+            'bottom_shelf': lambda pose=None: self.execute_pose(self.arm,'place_bottom_shelf'),
+            'center_shelf': lambda pose=None: self.execute_pose(self.arm,'pick_center_shelf'),
+            'add_shelfs': lambda pose: self.add_shelfs(pose.position.x),
             'head_up': lambda pose=None: self.execute_pose(self.head,'up'),
+            'way_up': lambda pose=None: self.move_joint(9, 0.3),
+            'center_shelf': lambda pose=None: self.execute_pose(self.head,'center_shelf'),
             'head_down': lambda pose=None: self.execute_pose(self.head,'down'),
             'way_down': lambda pose=None: self.execute_pose(self.head,'way_down'),
             'serving_right': lambda pose=None: self.serving('right'),
             'serving_cereal_right': lambda pose=None: self.serving_cereal('right'),
             'serving_cereal_left': lambda pose=None: self.serving_cereal('left'),
             'serving_left': lambda pose=None: self.serving('left'),
-            'hold_left': lambda pose=None: self.execute_pose(self.arm, 'hold_left'),
-            'hold_right': lambda pose=None: self.execute_pose(self.arm, 'hold_right'),
             'pick': lambda pose: self.pick(pose),
-            'place': lambda pose=None: self.place(),
+            'close_with_box': lambda pose=None: self.close_with_box(),
+            'place': lambda pose=None: self.place('place'),
+            'place_dinner_table': lambda pose=None: self.place('place_dinner_table'),
+            'place_bottom_shelf': lambda pose=None: self.place('place_bottom_shelf'),
             '': lambda pose: self.go_to_coordinates(pose),
         }
 
@@ -95,11 +109,42 @@ class Manipulator:
             'point_rad': lambda id,position: self.point_rad(position),
             'point_pixel': lambda id,position: self.point_pixel(position),
             'add_shelfs': lambda id, position: self.add_shelfs(position),
-            'remove_shelfs': lambda id, position: self.remove_shelfs(),
         }
 
         try:
             result = functions[function_name](id,position)
+            return str(result)
+
+        except KeyError:
+            rospy.logerr('Invalid function name %s' % function_name)
+            return "Invalid function name: {}".format(function_name)
+        
+    def look_handler(self, request):
+        name = request.name
+        try:
+            result = self.look_for_person(name)
+            return result
+
+        except KeyError:
+            rospy.logerr('Invalid function request')
+            return False
+        
+    def adding_furniture(self, request):
+        function_name = request.type
+        num = request.num
+        height = request.height
+        self.coordinates = request.goal
+
+        pose = Pose(position=Point(self.coordinates.x, self.coordinates.y, self.coordinates.z), orientation=Quaternion(0.0,0.0,0.0,1.0))
+
+        functions = {
+            'add_bookcase': lambda pose: self.add_bookcase(num, height, pose),
+            'remove_all_objects': lambda pose=None: self.remove_all_objects(),
+            'remove_bookcase': lambda pose=None: self.remove_bookcase(num)
+        }
+
+        try:
+            result = functions[function_name](pose)
             return str(result)
 
         except KeyError:
@@ -119,7 +164,7 @@ class Manipulator:
     
     def add_box_object(self, name, dimensions, pose):
         p = PoseStamped()
-        p.header.frame_id = "manip_base_link"
+        p.header.frame_id = "bookcase"
         p.header.stamp = rospy.Time.now()
         p.pose.position.x = pose[0]
         p.pose.position.y = pose[1]
@@ -131,14 +176,24 @@ class Manipulator:
 
         self.scene.add_box(name, p, (dimensions[0], dimensions[1], dimensions[2]))
     
-    def add_shelfs(self,positionx):
-        self.shelf1_pose = [positionx, 0.0, 0.15, 0, 0, 0, 1]
-        self.shelf2_pose = [positionx, 0.0, 0.37, 0, 0, 0, 1]
-        
-        self.shelf_dimensions = [0.42, 2.00, 0.02]
+    def add_bookcase(self, num, height, pose):
+        largura = 0.93
+        espessura = 0.03
+        profundidade = 0.27
 
-        self.add_box_object("shelf1", self.shelf_dimensions, self.shelf1_pose)
-        self.add_box_object("shelf2", self.shelf_dimensions, self.shelf2_pose)
+        self.shelf_dimensions = [profundidade, largura, espessura]
+        shelves_heights = 0
+        for i in range(num+1):
+            self.shelf_pose = [pose.position.x, pose.position.y, shelves_heights, 0, 0, 0, 1]
+            self.add_box_object("shelf{}"+format(i), self.shelf_dimensions, self.shelf_pose)
+            shelves_heights += (height/num)
+        
+        self.wall_dimensions = [profundidade, espessura, height, 0, 0, 0, 1]
+
+        self.wall1_pose = [self.shelf_pose[0], self.shelf_pose[1] - self.shelf_dimensions[1]/2, height/2 , 0, 0, 0, 1]
+        self.wall2_pose = [self.shelf_pose[0], self.shelf_pose[1] + self.shelf_dimensions[1]/2, height/2 , 0, 0, 0, 1]        
+        self.add_box_object("wall1", self.wall_dimensions, self.wall1_pose)
+        self.add_box_object("wall2", self.wall_dimensions, self.wall2_pose)
         return True
     
     def makeSolidPrimitive(self, name, solid, pose):
@@ -165,7 +220,7 @@ class Manipulator:
         ps.header.frame_id = "manip_base_link"
         ps.pose.position.x = x
         ps.pose.position.y = y
-        ps.pose.position.z = z
+        ps.pose.position.z = z 
         ps.pose.orientation.w = 1.0
 
         self.addSolidPrimitive(name, s, ps.pose)
@@ -200,11 +255,12 @@ class Manipulator:
         return success
 
     def move_joint(self,id,position):
-        if id == 9:
-            id = 0
+        if id == 9 or id == 10:
+            id -= 9
             group = self.head
-            position = 0 if position >= 0.0 else position
-            position = -1.5 if position <= -1.5 else position
+            if id == 9:
+                position = 0.3 if position >= 0.3 else position
+                position = -2.0 if position <= -2.0 else position
             
         elif id == 7 or id == 8:
             id-=1
@@ -218,16 +274,55 @@ class Manipulator:
         group.set_joint_value_target(values)
         success = group.go(wait=True)
         return success
+    
+    def look_for_person(self, name):
+        self.move_joint(10, 0.0)
+        person_found = False
+        motor_position = 0.0  # Início na posição central 0.0
+        increment = 0.05  # Incremento/decremento por passo
+
+        # Primeiro, tenta girar à direita até 0.6
+        while not person_found and motor_position <= 0.35:
+            resp = self.recog_face(name)
+            center = resp.centers[0] if len(resp.centers) != 0 else 0.0
+            if 540 <= center <= 740:  # Verifica se a pessoa está no centro da câmera
+                self.point_pixel(center)
+                person_found = True
+                break
+            else:
+                motor_position += increment  # Move o motor para a direita
+                self.move_joint(10, motor_position)
+
+        # Se não encontrou, começa a girar para a esquerda até -0.6
+        motor_position = 0.0  # Restaura a posição central antes de ir para a esquerda
+        while not person_found and motor_position >= -0.35:
+            resp = self.recog_face(name)
+            center = resp.centers[0] if len(resp.centers) != 0 else 0.0
+            if 540 <= center <= 740:
+                self.point_pixel(center)
+                person_found = True
+                break
+            else:
+                motor_position -= increment  # Move o motor para a esquerda
+                self.move_joint(10, motor_position)
+
+        return person_found
+
+    def close_with_box(self):
+        self.clear_octomap()
+        self.addCylinder(self.box_name, 0.18, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
+        self.attach_box()
+        self.execute_pose(self.hand,'close')
+        return True
 
     def pick(self,pose):
         self.execute_pose(self.hand,'open')
         self.clear_octomap()
-        self.addCylinder(self.box_name, 0.1, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
+        self.addCylinder(self.box_name, 0.18, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
         rospy.sleep(2)
         self.execute_pose(self.head, 'down')
-        pose.position.z = 0.20
-        # pose.position.y -= 0.02
-        pose.position.x -= 0.115
+        pose.position.z = 0.15
+        pose.position.x -= 0.11
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
         self.execute_pose(self.head, 'up')
@@ -235,32 +330,34 @@ class Manipulator:
         success = self.arm.go(wait=True)
         if success:
             self.attach_box()
-            success2 = self.execute_pose(self.hand,'close')
-            self.execute_pose(self.arm,'attack')
+            success2 = self.execute_pose(self.hand,'hard_close')
+            # self.execute_pose(self.arm,'attack')
             return success2
         return success
 
-    def place(self):
+    def place(self, manip_pose):
         self.clear_octomap()
-        success = self.execute_pose(self.arm,'place')
+        success = self.execute_pose(self.arm, manip_pose)
         rospy.sleep(2)
         if success:
             self.detach_box()
             self.remove_box()
             self.execute_pose(self.hand,'open')
         return success
-    
+
     def point_pixel(self, pixel):
-        self.execute_pose(self.hand, 'close')
+        self.execute_pose(self.hand, 'hard_close')
         self.execute_pose(self.arm, 'point')
-        x = ((-1.55/640)*pixel) + 0.775
+        x = ((-1.55/1280)*pixel) + 0.775
         self.move_joint(1, x)
+        self.move_joint(10, x)
         return True
 
     def point_rad(self,angle):
-        self.execute_pose(self.hand, 'close')
+        self.execute_pose(self.hand, 'hard_close')
         self.execute_pose(self.arm, 'point')
         self.move_joint(1, angle)
+        self.move_joint(10, angle)
         return True    
 
     def remove_box(self, timeout=4):
@@ -268,10 +365,16 @@ class Manipulator:
         scene = self.scene
         scene.remove_world_object(box_name)
         return self.wait_for_state_update(box_is_attached=False, box_is_known=False, timeout=4)
+
+    def remove_bookcase(self, num):
+        for i in range(num+1):
+            self.scene.remove_world_object("shelf{}"+format(i))
+        self.scene.remove_world_object("wall1")
+        self.scene.remove_world_object("wall2")
+        return True
     
-    def remove_shelfs(self):
-        self.scene.remove_world_object("shelf1")
-        self.scene.remove_world_object("shelf2")
+    def remove_all_objects(self):
+        self.scene.clear()
         return True
     
     def serving(self, side):
@@ -333,7 +436,7 @@ class Manipulator:
 
 if __name__ == '__main__':
     moveit_commander.roscpp_initialize(sys.argv)
-    rospy.init_node('manipulator', log_level=rospy.INFO)
+    rospy.init_node('manipulator', log_level=rospy.ERROR)
     Manipulator()
 
     try:
