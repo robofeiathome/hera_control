@@ -12,7 +12,19 @@ from hera_control.srv import Manip_service, Joint_service, Furniture, Look_for_p
 from std_srvs.srv import Empty as Empty_srv
 from shape_msgs.msg import MeshTriangle, Mesh, SolidPrimitive, Plane
 from hera_face.srv import face_list
+import math
 
+
+def law_cosines(a, angle, c):
+    return math.sqrt(a**2 + c**2 - 2*a*c*math.cos(angle))
+
+
+def law_sines(a, b, c):
+    return (a * b) / c
+
+
+def sine_of_angle(angle):
+    return math.sin(math.radians(angle))
 
 
 class Manipulator:
