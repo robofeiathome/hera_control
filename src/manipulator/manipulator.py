@@ -345,14 +345,22 @@ class Manipulator:
         return success
 
     def point_pixel(self, pixel):
+        manip_cam_dist = 0.25
+        point_dist = 2
+        cam_x_pixel = 1280
+
+        pixel_rad = ((-1.55/cam_x_pixel)*pixel) + 0.775
+        manip_point_dist = law_cosines(manip_cam_dist, point_dist, pixel_rad)
+        manip_point_rad = law_sines(point_dist, pixel_rad, manip_point_dist)
+        manip_rad = sine_of_angle(manip_point_rad)
+
         self.execute_pose(self.hand, 'hard_close')
         self.execute_pose(self.arm, 'point')
-        x = ((-1.55/1280)*pixel) + 0.775
-        self.move_joint(1, x)
-        self.move_joint(10, x)
+        self.move_joint(1, manip_rad)
+        self.move_joint(10, pixel_rad)
         return True
 
-    def point_rad(self,angle):
+    def point_rad(self, angle):
         self.execute_pose(self.hand, 'hard_close')
         self.execute_pose(self.arm, 'point')
         self.move_joint(1, angle)
