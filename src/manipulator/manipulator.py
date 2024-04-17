@@ -289,34 +289,21 @@ class Manipulator:
     
     def look_for_person(self, name):
         self.move_joint(10, 0.0)
+
+        motor_position = [0.0, 0.3, -0.3]
         person_found = False
-        motor_position = 0.0  # Início na posição central 0.0
-        increment = 0.05  # Incremento/decremento por passo
 
-        # Primeiro, tenta girar à direita até 0.6
-        while not person_found and motor_position <= 0.35:
+        i = 0
+        while not person_found:
             resp = self.recog_face(name)
             center = resp.centers[0] if len(resp.centers) != 0 else 0.0
-            if 540 <= center <= 740:  # Verifica se a pessoa está no centro da câmera
+            if center:
                 self.point_pixel(center)
                 person_found = True
                 break
             else:
-                motor_position += increment  # Move o motor para a direita
-                self.move_joint(10, motor_position)
-
-        # Se não encontrou, começa a girar para a esquerda até -0.6
-        motor_position = 0.0  # Restaura a posição central antes de ir para a esquerda
-        while not person_found and motor_position >= -0.35:
-            resp = self.recog_face(name)
-            center = resp.centers[0] if len(resp.centers) != 0 else 0.0
-            if 540 <= center <= 740:
-                self.point_pixel(center)
-                person_found = True
-                break
-            else:
-                motor_position -= increment  # Move o motor para a esquerda
-                self.move_joint(10, motor_position)
+                i = i + 1 if i < 2 else 0
+                self.move_joint(10, motor_position[i])
 
         return person_found
 
