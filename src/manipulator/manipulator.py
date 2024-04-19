@@ -11,6 +11,19 @@ from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 from hera_control.srv import Manip_service, Joint_service, Furniture
 from std_srvs.srv import Empty as Empty_srv
 from shape_msgs.msg import MeshTriangle, Mesh, SolidPrimitive, Plane
+from hera_face.srv import face_list
+import math
+
+def law_cosines(a, angle, c):
+    return math.sqrt(a**2 + c**2 - 2*a*c*math.cos(angle))
+
+
+def law_sines(a, b, c):
+    return (a * b) / c
+
+
+def sine_of_angle(angle):
+    return math.sin(math.radians(angle))
 
 
 class Manipulator:
@@ -262,6 +275,26 @@ class Manipulator:
         group.set_joint_value_target(values)
         success = group.go(wait=True)
         return success
+    
+    def look_for_person(self, name):
+        self.move_joint(10, 0.0)
+
+        motor_position = [0.0, 0.3, -0.3]
+        person_found = False
+
+        i = 0
+        while not person_found:
+            resp = self.recog_face(name)
+            center = resp.centers[0] if len(resp.centers) != 0 else 0.0
+            if center:
+                self.point_pixel(center)
+                person_found = True
+                break
+            else:
+                i = i + 1 if i < 2 else 0
+                self.move_joint(10, motor_position[i])
+
+        return person_found
 
     def close_with_box(self):
         self.clear_octomap()
@@ -303,14 +336,23 @@ class Manipulator:
         return success
 
     def point_pixel(self, pixel):
-        self.execute_pose(self.hand, 'close')
+        manip_cam_dist = 0.25
+        point_dist = 2
+        cam_x_pixel = 1280
+
+        pixel_rad = ((-1.55/cam_x_pixel)*pixel) + 0.775
+        manip_point_dist = law_cosines(manip_cam_dist, point_dist, pixel_rad)
+        manip_point_rad = law_sines(point_dist, pixel_rad, manip_point_dist)
+        manip_rad = sine_of_angle(manip_point_rad)
+
+        self.execute_pose(self.hand, 'hard_close')
         self.execute_pose(self.arm, 'point')
-        x = ((-1.55/1920)*pixel) + 0.775
-        self.move_joint(1, x)
+        self.move_joint(1, manip_rad)
+        self.move_joint(10, pixel_rad)
         return True
 
-    def point_rad(self,angle):
-        self.execute_pose(self.hand, 'close')
+    def point_rad(self, angle):
+        self.execute_pose(self.hand, 'hard_close')
         self.execute_pose(self.arm, 'point')
         self.move_joint(1, angle)
         return True    
