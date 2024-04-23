@@ -20,7 +20,7 @@ def law_cosines(a, angle, c):
 
 
 def law_sines(a, b, c):
-    return (a * b) / c
+    return math.asin(a * math.sin(b) / c)
 
 
 def sine_to_rad(sine):
@@ -299,16 +299,18 @@ class Manipulator:
         MOTOR_POSITIONS = [0.0, 0.3, -0.3]
         person_found = False
 
-        for i in range(3):
+        i = 0
+        while not person_found:
             resp = self.recog_face(name)
+            rospy.loginfo("Looking for {}".format(name))
             if resp.centers:
-                rospy.loginfo(resp.centers.index(name))
-                center = resp.centers[resp.centers.index(name)]
+                center = resp.centers[0]
                 self.point_pixel(center)
                 person_found = True
                 break
             else:
                 self.move_joint(10, MOTOR_POSITIONS[i])
+                i += 1 if i < 2 else 0
 
         return person_found
 
@@ -355,7 +357,7 @@ class Manipulator:
         point_dist = 2
         cam_x_pixel = 1280
 
-        pixel_rad = ((-1.55/cam_x_pixel)*pixel) + 0.775
+        pixel_rad = ((-1.4/cam_x_pixel)*pixel) + 0.825
         manip_point_dist = law_cosines(manip_cam_dist, pixel_rad, point_dist)
         manip_point_rad = law_sines(point_dist, pixel_rad, manip_point_dist)
         print(manip_point_rad)
