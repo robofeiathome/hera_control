@@ -23,7 +23,7 @@ arm_controller:
     action_monitor_rate: 10
 
 gripper_controller:
-    type: effort_controllers/JointTrajectoryController
+    type: position_controllers/JointTrajectoryController
     joints:
         - gripper_left_joint
         - gripper_right_joint
