@@ -158,7 +158,8 @@ class Manipulator:
         functions = {
             'add_bookcase': lambda pose: self.add_bookcase(num, height, pose),
             'remove_all_objects': lambda pose=None: self.remove_all_objects(),
-            'remove_bookcase': lambda pose=None: self.remove_bookcase(num)
+            'remove_bookcase': lambda pose=None: self.remove_bookcase(num),
+            'detach': lambda pose=None: self.detach_box()
         }
 
         try:
@@ -368,14 +369,12 @@ class Manipulator:
         # self.execute_pose(self.hand, 'w')
         self.execute_pose(self.arm, 'point')
         self.move_joint(1, manip_rad)
-        self.move_joint(10, pixel_rad)
         return True
 
     def point_rad(self, angle):
         self.execute_pose(self.hand, 'hard_close')
         self.execute_pose(self.arm, 'point')
         self.move_joint(1, angle)
-        self.move_joint(10, angle)
         return True    
 
     def remove_box(self, timeout=4):
