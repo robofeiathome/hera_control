@@ -102,6 +102,7 @@ class Manipulator:
             'serving_cereal_left': lambda pose=None: self.serving_cereal('left'),
             'serving_left': lambda pose=None: self.serving('left'),
             'pick': lambda pose: self.pick(pose),
+            'place_with_pose': lambda pose: self.place_with_pose(pose),
             'close_with_box': lambda pose=None: self.close_with_box(),
             'place': lambda pose=None: self.place('place'),
             'place_dinner_table': lambda pose=None: self.place('place_dinner_table'),
@@ -326,9 +327,9 @@ class Manipulator:
     def pick(self,pose):
         self.execute_pose(self.hand,'open')
         self.clear_octomap()
-        self.addCylinder(self.box_name, 0.18, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
+        self.addCylinder(self.box_name, 0.18, 0.0125, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
         pose.position.x -= 0.12
-        # pose.position.y += 0.02
+        pose.position.y += 0.02
         pose.position.z = 0.17
         rospy.sleep(2)
         self.execute_pose(self.head, 'down')
@@ -351,6 +352,21 @@ class Manipulator:
         self.clear_octomap()
         success = self.execute_pose(self.arm, manip_pose)
         rospy.sleep(2)
+        if success:
+            self.detach_box()
+            self.remove_box()
+            self.execute_pose(self.hand,'open')
+        return success
+    
+    def place_with_pose(self, pose):
+        self.execute_pose(self.head, 'way_down')
+        self.clear_octomap()
+        pose.position.z = 0.17
+        target_pose = copy.deepcopy(pose)
+        self.arm.set_pose_target(target_pose)
+        rospy.sleep(3)
+        success = self.arm.go(wait=True)
+
         if success:
             self.detach_box()
             self.remove_box()
