@@ -327,16 +327,20 @@ class Manipulator:
         self.execute_pose(self.hand,'open')
         self.clear_octomap()
         self.addCylinder(self.box_name, 0.18, 0.025, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
+        pose.position.x -= 0.12
+        # pose.position.y += 0.02
+        pose.position.z = 0.17
         rospy.sleep(2)
         self.execute_pose(self.head, 'down')
-        pose.position.z = 0.15
-        pose.position.x -= 0.11
+
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
         self.execute_pose(self.head, 'up')
-        rospy.sleep(1)
+        rospy.sleep(3)
         success = self.arm.go(wait=True)
         if success:
+            self.clear_octomap()
+            rospy.sleep(1)
             self.attach_box()
             success2 = self.execute_pose(self.hand,'hard_close')
             # self.execute_pose(self.arm,'attack')
