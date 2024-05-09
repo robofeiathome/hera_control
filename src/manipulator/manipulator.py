@@ -326,22 +326,23 @@ class Manipulator:
 
     def pick(self,pose):
         self.execute_pose(self.hand,'open')
+        self.execute_pose(self.head, 'down')
+        rospy.sleep(2)
         self.clear_octomap()
-        self.addCylinder(self.box_name, 0.18, 0.0125, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
+        self.addCylinder(self.box_name, 0.1, 0.0125, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
         pose.position.x -= 0.12
         pose.position.y += 0.02
-        pose.position.z = 0.17
-        rospy.sleep(2)
-        self.execute_pose(self.head, 'down')
+        # rospy.sleep(2)
 
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
         self.execute_pose(self.head, 'up')
-        rospy.sleep(3)
+        rospy.sleep(1)
         success = self.arm.go(wait=True)
         if success:
-            self.clear_octomap()
-            rospy.sleep(1)
+            # tirei o clear antes do attach, pois estava demorando muito
+            # self.clear_octomap()
+            # rospy.sleep(1)
             self.attach_box()
             success2 = self.execute_pose(self.hand,'hard_close')
             # self.execute_pose(self.arm,'attack')
@@ -359,14 +360,16 @@ class Manipulator:
         return success
     
     def place_with_pose(self, pose):
-        self.execute_pose(self.head, 'way_down')
+        self.execute_pose(self.head, 'down')
         self.clear_octomap()
-        pose.position.z = 0.17
+        rospy.sleep(2)
+        pose.position.x -= 0.12
+        # pose.position.z = 0.13
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
-        rospy.sleep(3)
+        self.execute_pose(self.head, 'up')
+        rospy.sleep(1)
         success = self.arm.go(wait=True)
-
         if success:
             self.detach_box()
             self.remove_box()
