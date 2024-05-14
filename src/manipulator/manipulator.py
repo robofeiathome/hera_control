@@ -329,9 +329,11 @@ class Manipulator:
         self.execute_pose(self.head, 'down')
         rospy.sleep(2)
         self.clear_octomap()
-        self.addCylinder(self.box_name, 0.1, 0.0125, (self.coordinates.x), self.coordinates.y, self.coordinates.z)
+
+
+        self.addCylinder(self.box_name, 0.1, 0.0125, (self.coordinates.x), (self.coordinates.y + 0.06), self.coordinates.z)
         pose.position.x -= 0.12
-        pose.position.y += 0.02
+        pose.position.y += 0.06
         # rospy.sleep(2)
 
         target_pose = copy.deepcopy(pose)
@@ -344,9 +346,13 @@ class Manipulator:
             # self.clear_octomap()
             # rospy.sleep(1)
             self.attach_box()
+            self.clear_octomap()
             success2 = self.execute_pose(self.hand,'hard_close')
             # self.execute_pose(self.arm,'attack')
             return success2
+        else:
+            self.detach_box()
+            self.remove_box()
         return success
 
     def place(self, manip_pose):
