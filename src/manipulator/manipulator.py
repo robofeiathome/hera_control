@@ -158,6 +158,7 @@ class Manipulator:
         pose = Pose(position=Point(self.coordinates.x, self.coordinates.y, self.coordinates.z), orientation=Quaternion(0.0,0.0,0.0,1.0))
 
         functions = {
+            'add_box': lambda pose=None: self.add_box_object("cabinet", [0.5, 0.7, height], [self.coordinates.x, self.coordinates.y, self.coordinates.z, 0, 0, 0, 1], "cabinet"),
             'add_bookcase': lambda pose: self.add_bookcase(num, height, pose),
             'remove_all_objects': lambda pose=None: self.remove_all_objects(),
             'remove_bookcase': lambda pose=None: self.remove_bookcase(num),
@@ -183,9 +184,9 @@ class Manipulator:
         scene.add_box(box_name, box_pose, size=(0.05, 0.05, 0.15))
         return self.wait_for_state_update(box_is_known=True, timeout=4)
     
-    def add_box_object(self, name, dimensions, pose):
+    def add_box_object(self, name, dimensions, pose, frame="bookcase"):
         p = PoseStamped()
-        p.header.frame_id = "bookcase"
+        p.header.frame_id = frame
         p.header.stamp = rospy.Time.now()
         p.pose.position.x = pose[0]
         p.pose.position.y = pose[1]
@@ -359,26 +360,23 @@ class Manipulator:
     def pick_bottom(self,pose):
         self.execute_pose(self.hand,'open')
         self.execute_pose(self.head, 'way_down')
-        rospy.sleep(2)
+        # rospy.sleep(2)
         self.clear_octomap()
 
-
-        self.addCylinder(self.box_name, 0.1, 0.0125, (self.coordinates.x), (self.coordinates.y + 0.03), self.coordinates.z)
+        self.addCylinder(self.box_name, 0.15, 0.0125, (self.coordinates.x - 0.02), (self.coordinates.y + 0.03), self.coordinates.z)
         pose.position.x -= 0.12
         pose.position.y += 0.03
-        rospy.sleep(2)
-
+        # rospy.sleep(1)
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
         self.execute_pose(self.head, 'up')
-        rospy.sleep(1)
+        # rospy.sleep(1)
         success = self.arm.go(wait=True)
         if success:
             # tirei o clear antes do attach, pois estava demorando muito
             # self.clear_octomap()
             # rospy.sleep(1)
             self.attach_box()
-            self.clear_octomap()
             success2 = self.execute_pose(self.hand,'hard_close')
             # self.execute_pose(self.arm,'attack')
             return success2
@@ -390,7 +388,7 @@ class Manipulator:
     def place(self, manip_pose):
         self.clear_octomap()
         success = self.execute_pose(self.arm, manip_pose)
-        rospy.sleep(2)
+        # rospy.sleep(2)
         if success:
             self.detach_box()
             self.remove_box()
@@ -447,6 +445,8 @@ class Manipulator:
     def remove_bookcase(self, num):
         for i in range(num+1):
             self.scene.remove_world_object("shelf{}"+format(i))
+            
+        self.scene.remove_world_object("cabinet")    
         self.scene.remove_world_object("wall1")
         self.scene.remove_world_object("wall2")
         return True
