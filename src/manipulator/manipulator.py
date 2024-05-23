@@ -158,7 +158,7 @@ class Manipulator:
         pose = Pose(position=Point(self.coordinates.x, self.coordinates.y, self.coordinates.z), orientation=Quaternion(0.0,0.0,0.0,1.0))
 
         functions = {
-            'add_box': lambda pose=None: self.add_box_object("cabinet", [0.5, 0.7, height], [self.coordinates.x, self.coordinates.y, self.coordinates.z, 0, 0, 0, 1], "cabinet"),
+            'add_box': lambda pose=None: self.add_box_object("cabinet", [0.5, 0.7, height], [self.coordinates.x, self.coordinates.y, self.coordinates.z, 0, 0, 0, 1], "coffee_table"),
             'add_bookcase': lambda pose: self.add_bookcase(num, height, pose),
             'remove_all_objects': lambda pose=None: self.remove_all_objects(),
             'remove_bookcase': lambda pose=None: self.remove_bookcase(num),
@@ -363,9 +363,9 @@ class Manipulator:
         # rospy.sleep(2)
         self.clear_octomap()
 
-        self.addCylinder(self.box_name, 0.15, 0.0125, (self.coordinates.x - 0.02), (self.coordinates.y + 0.03), self.coordinates.z)
-        pose.position.x -= 0.12
-        pose.position.y += 0.03
+        self.addCylinder(self.box_name, 0.17, 0.0125, (self.coordinates.x), (self.coordinates.y), self.coordinates.z)
+        pose.position.x -= 0.10
+        pose.position.y += 0.0
         # rospy.sleep(1)
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
