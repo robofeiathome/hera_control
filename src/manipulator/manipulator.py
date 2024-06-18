@@ -6,6 +6,7 @@ import rospy
 import tf
 import moveit_commander
 import moveit_msgs.msg
+from sensor_msgs.msg import JointState
 from moveit_msgs.msg import CollisionObject, AttachedCollisionObject
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 from hera_control.srv import Manip_service, Joint_service, Furniture, Look_for_person
@@ -60,6 +61,7 @@ class Manipulator:
         self.display_trajectory_publisher = rospy.Publisher("/move_group_arm/display_planned_path", moveit_msgs.msg.DisplayTrajectory, queue_size=20)  
         self._pub = rospy.Publisher('collision_object',CollisionObject,queue_size=10)
 
+        rospy.Subscriber('/joint_states', JointState, self.callback_positions)
 
         rospy.Service('manipulator', Manip_service, self.handler)
         rospy.Service('joint_command', Joint_service, self.joints_handler)
@@ -75,6 +77,9 @@ class Manipulator:
 
         self.box_name = "box"
         self.eef_link = self.arm.get_end_effector_link()
+
+    def callback_positions(self, msg):
+        self.joint_positions = msg.position
 
     def handler(self, request):
         function_name = request.type.lower()
@@ -123,7 +128,7 @@ class Manipulator:
         function_name = request.type.lower()
         id = request.goal.id
         position = request.goal.x
-
+        
         functions = {
             '': lambda id, position: self.move_joint(id, position),
             'point_rad': lambda id,position: self.point_rad(position),
@@ -305,6 +310,7 @@ class Manipulator:
 
         i = 0
         while not person_found:
+            self.move_joint(10, MOTOR_POSITIONS[i])
             resp = self.recog_face(name)
             rospy.loginfo("Looking for {}".format(name))
             if resp.centers:
@@ -313,8 +319,7 @@ class Manipulator:
                 person_found = True
                 break
             else:
-                self.move_joint(10, MOTOR_POSITIONS[i])
-                i += 1 if i < 2 else 0
+                i = i + 1 if i < 2 else 0
 
         return person_found
 
@@ -414,10 +419,12 @@ class Manipulator:
 
     def point_pixel(self, pixel):
         manip_cam_dist = 0.25
-        point_dist = 2
+        point_dist = 3
         cam_x_pixel = 1280
 
-        pixel_rad = ((-1.4/cam_x_pixel)*pixel) + 0.825
+        pose = self.joint_positions[4] 
+
+        pixel_rad = (((-1.4/cam_x_pixel)*pixel) + 0.825) + pose
         manip_point_dist = law_cosines(manip_cam_dist, pixel_rad, point_dist)
         manip_point_rad = law_sines(point_dist, pixel_rad, manip_point_dist)
         print(manip_point_rad)
