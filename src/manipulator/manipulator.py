@@ -422,6 +422,7 @@ class Manipulator:
         point_dist = 3
         cam_x_pixel = 1280
 
+<<<<<<< HEAD
         pose = self.joint_positions[4] 
 
         pixel_rad = (((-1.4/cam_x_pixel)*pixel) + 0.825) + pose
@@ -435,6 +436,19 @@ class Manipulator:
         # self.execute_pose(self.hand, 'w')
         self.execute_pose(self.arm, 'point')
         self.move_joint(1, manip_rad)
+=======
+        pixel_rad = ((-1.4/cam_x_pixel)*pixel) + 0.825
+        # manip_point_dist = law_cosines(manip_cam_dist, pixel_rad, point_dist)
+        # manip_point_rad = law_sines(point_dist, pixel_rad, manip_point_dist)
+        # print(manip_point_rad)
+        # manip_rad = sine_to_rad(manip_point_rad)
+        #
+        # manip_rad = manip_rad if pixel_rad > 0 else -manip_rad
+        #
+        # # self.execute_pose(self.hand, 'w')
+        # self.execute_pose(self.arm, 'point')
+        self.move_joint(10, pixel_rad)
+>>>>>>> 7d16324005b030ec873f5ed03673b8aaec37cdef
         return True
 
     def point_rad(self, angle):
