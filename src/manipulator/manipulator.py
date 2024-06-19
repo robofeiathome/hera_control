@@ -101,6 +101,7 @@ class Manipulator:
             'way_up': lambda pose=None: self.move_joint(9, 0.3),
             'center_shelf': lambda pose=None: self.execute_pose(self.head,'center_shelf'),
             'head_down': lambda pose=None: self.execute_pose(self.head,'down'),
+            'head_receptionist': lambda pose=None: self.execute_pose(self.head,'head_receptionist'),
             'way_down': lambda pose=None: self.execute_pose(self.head,'way_down'),
             'serving_right': lambda pose=None: self.serving('right'),
             'serving_cereal_right': lambda pose=None: self.serving_cereal('right'),
