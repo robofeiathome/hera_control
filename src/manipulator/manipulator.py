@@ -402,15 +402,20 @@ class Manipulator:
         return success
     
     def place_with_pose(self, pose):
-        self.execute_pose(self.head, 'down')
+
+        if pose.position.z > 0:
+            self.execute_pose(self.head, 'down')
+        else:
+            self.execute_pose(self.head, 'way_down')
+            
         self.clear_octomap()
         rospy.sleep(2)
         pose.position.x -= 0.12
         # pose.position.z = 0.13
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
-        self.execute_pose(self.head, 'up')
-        rospy.sleep(1)
+        self.execute_pose(self.head, 'head_receptionist')
+        # rospy.sleep(1)
         success = self.arm.go(wait=True)
         if success:
             self.detach_box()
