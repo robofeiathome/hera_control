@@ -403,13 +403,13 @@ class Manipulator:
     
     def place_with_pose(self, pose):
 
-        if pose.position.z > 0:
+        '''if pose.position.z > 0:
             self.execute_pose(self.head, 'down')
         else:
-            self.execute_pose(self.head, 'way_down')
+            self.execute_pose(self.head, 'way_down')'''
             
         self.clear_octomap()
-        rospy.sleep(2)
+        #rospy.sleep(2)
         pose.position.x -= 0.12
         # pose.position.z = 0.13
         target_pose = copy.deepcopy(pose)
