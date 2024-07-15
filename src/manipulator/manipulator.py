@@ -164,7 +164,7 @@ class Manipulator:
         pose = Pose(position=Point(self.coordinates.x, self.coordinates.y, self.coordinates.z), orientation=Quaternion(0.0,0.0,0.0,1.0))
 
         functions = {
-            'add_box': lambda pose=None: self.add_box_object("cabinet", [0.5, 0.7, height], [self.coordinates.x, self.coordinates.y, self.coordinates.z, 0, 0, 0, 1], "coffee_table"),
+            'add_box': lambda pose=None: self.add_box_object("cabinet", [2.0, 0.79, height], [self.coordinates.x, self.coordinates.y, self.coordinates.z, 0, 0, 0, 1], "table"),
             'add_bookcase': lambda pose: self.add_bookcase(num, height, pose),
             'remove_all_objects': lambda pose=None: self.remove_all_objects(),
             'remove_bookcase': lambda pose=None: self.remove_bookcase(num),
@@ -339,15 +339,16 @@ class Manipulator:
         rospy.sleep(2)
 
 
-        self.addCylinder(self.box_name, 0.1, 0.0125, (self.coordinates.x), (self.coordinates.y + 0.03), self.coordinates.z)
+        self.addCylinder(self.box_name, 0.125, 0.0125, (self.coordinates.x), (self.coordinates.y + 0.04), self.coordinates.z)
         pose.position.x -= 0.12
-        pose.position.y += 0.03
+        pose.position.y += 0.04
         # rospy.sleep(2)
 
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
         self.execute_pose(self.head, 'up')
         rospy.sleep(1)
+        self.clear_octomap()
         success = self.arm.go(wait=True)
         if success:
             # tirei o clear antes do attach, pois estava demorando muito
