@@ -205,12 +205,12 @@ class Manipulator:
         self.scene.add_box(name, p, (dimensions[0], dimensions[1], dimensions[2]))
     
     def add_bookcase(self, num, height, pose):
-        largura = 0.93
+        largura = 0.8
         espessura = 0.03
-        profundidade = 0.27
+        profundidade = 0.4
 
         self.shelf_dimensions = [profundidade, largura, espessura]
-        shelves_heights = 0
+        shelves_heights = 0.1
         for i in range(num+1):
             self.shelf_pose = [pose.position.x, pose.position.y, shelves_heights, 0, 0, 0, 1]
             self.add_box_object("shelf{}"+format(i), self.shelf_dimensions, self.shelf_pose)
