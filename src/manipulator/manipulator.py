@@ -164,10 +164,11 @@ class Manipulator:
         pose = Pose(position=Point(self.coordinates.x, self.coordinates.y, self.coordinates.z), orientation=Quaternion(0.0,0.0,0.0,1.0))
 
         functions = {
-            'add_box': lambda pose=None: self.add_box_object("cabinet", [2.0, 0.79, height], [self.coordinates.x, self.coordinates.y, self.coordinates.z, 0, 0, 0, 1], "table"),
+            'add_box': lambda pose=None: self.add_box_object("table", [2.0, 0.79, height], [self.coordinates.x, self.coordinates.y, self.coordinates.z, 0, 0, 0, 1], "table"),
             'add_bookcase': lambda pose: self.add_bookcase(num, height, pose),
             'remove_all_objects': lambda pose=None: self.remove_all_objects(),
             'remove_bookcase': lambda pose=None: self.remove_bookcase(num),
+            'remove_table': lambda pose=None: self.remove_table(),
             'detach': lambda pose=None: self.detach_box()
         }
 
@@ -461,6 +462,11 @@ class Manipulator:
         self.scene.remove_world_object("cabinet")    
         self.scene.remove_world_object("wall1")
         self.scene.remove_world_object("wall2")
+        return True
+    
+    def remove_table(self):
+
+        self.scene.remove_world_object("table")
         return True
     
     def remove_all_objects(self):
