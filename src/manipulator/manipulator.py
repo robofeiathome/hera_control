@@ -113,7 +113,7 @@ class Manipulator:
             'close_with_box': lambda pose=None: self.close_with_box(),
             'place': lambda pose=None: self.place('place'),
             'place_dinner_table': lambda pose=None: self.place('place_dinner_table'),
-            'place_bottom_shelf': lambda pose=None: self.place('place_bottom_shelf'),
+            'place_bottom_shelf': lambda pose=None: self.execute_pose(self.arm,'place_bottom'),
             '': lambda pose: self.go_to_coordinates(pose),
         }
 
