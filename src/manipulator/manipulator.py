@@ -92,6 +92,8 @@ class Manipulator:
             function_name: lambda pose=None: self.execute_pose(self.arm,function_name),
             'open': lambda pose=None: self.execute_pose(self.hand,'open'),
             'close': lambda pose=None: self.execute_pose(self.hand,'hard_close'),
+            'serve_close': lambda pose=None: self.execute_pose(self.hand,'serve_close'),
+            'soft_close': lambda pose=None: self.execute_pose(self.hand,'soft_close'),
             'ground': lambda pose=None: self.execute_pose(self.head,'ground'),
             'look_for_person': lambda pose=None: self.look_for_person(function_name),
             'bottom_shelf': lambda pose=None: self.execute_pose(self.arm,'place_bottom_shelf'),
@@ -474,7 +476,7 @@ class Manipulator:
         return True
     
     def serving(self, side):
-        self.execute_pose(self.arm, 'serve')
+        self.execute_pose(self.arm, 'serve_up')
         if side == 'left':
             pre = -1
         elif side == 'right':
@@ -490,12 +492,12 @@ class Manipulator:
             x -= 0.3*pre
             self.move_joint(5,x)
             rospy.sleep(0.5)
-        self.execute_pose(self.arm, 'serve')
+        self.execute_pose(self.arm, 'serve_up')
         self.execute_pose(self.arm, 'attack')
         return
     
     def serving_cereal(self, side):
-        self.execute_pose(self.arm, 'serve')
+        self.execute_pose(self.arm, 'serve_up')
         if side == 'left':
             pre = -1
         elif side == 'right':
@@ -510,7 +512,7 @@ class Manipulator:
         x -= 0.3*pre
         self.move_joint(5,x)
         rospy.sleep(0.5)
-        self.execute_pose(self.arm, 'serve')
+        self.execute_pose(self.arm, 'serve_up')
         self.execute_pose(self.arm, 'attack')
         return
     
