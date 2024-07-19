@@ -104,6 +104,7 @@ class Manipulator:
             'center_shelf': lambda pose=None: self.execute_pose(self.head,'center_shelf'),
             'head_down': lambda pose=None: self.execute_pose(self.head,'down'),
             'head_receptionist': lambda pose=None: self.execute_pose(self.head,'head_receptionist'),
+            'head_stickler': lambda pose=None: self.execute_pose(self.head,'head_stickler'),
             'way_down': lambda pose=None: self.execute_pose(self.head,'way_down'),
             'serving_right': lambda pose=None: self.serving('right'),
             'serving_cereal_right': lambda pose=None: self.serving_cereal('right'),
