@@ -209,7 +209,7 @@ class Manipulator:
         self.scene.add_box(name, p, (dimensions[0], dimensions[1], dimensions[2]))
     
     def add_bookcase(self, num, height, pose):
-        largura = 0.8
+        largura = 0.85
         espessura = 0.03
         profundidade = 0.4
 
@@ -342,15 +342,14 @@ class Manipulator:
         self.clear_octomap()
         rospy.sleep(2)
 
-
-        self.addCylinder(self.box_name, 0.125, 0.0125, (self.coordinates.x + 0.02), (self.coordinates.y + 0.04), self.coordinates.z)
+        self.addCylinder(self.box_name, 0.17, 0.013, (self.coordinates.x + 0.02), (self.coordinates.y + 0.04), self.coordinates.z)
         pose.position.x -= 0.1
-        pose.position.y += 0.04
+        pose.position.y += 0.02
         # rospy.sleep(2)
 
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
-        self.execute_pose(self.head, 'up')
+        self.execute_pose(self.head, 'way_up')
         rospy.sleep(1)
         self.clear_octomap()
         success = self.arm.go(wait=True)
@@ -376,7 +375,7 @@ class Manipulator:
 
         self.addCylinder(self.box_name, 0.17, 0.0125, (self.coordinates.x), (self.coordinates.y), self.coordinates.z)
         pose.position.x -= 0.10
-        pose.position.y += 0.0
+        pose.position.y += 0.06
         # rospy.sleep(1)
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
@@ -384,9 +383,6 @@ class Manipulator:
         # rospy.sleep(1)
         success = self.arm.go(wait=True)
         if success:
-            # tirei o clear antes do attach, pois estava demorando muito
-            # self.clear_octomap()
-            # rospy.sleep(1)
             self.attach_box()
             success2 = self.execute_pose(self.hand,'hard_close')
             # self.execute_pose(self.arm,'attack')
@@ -408,24 +404,23 @@ class Manipulator:
     
     def place_with_pose(self, pose):
 
-        '''if pose.position.z > 0:
-            self.execute_pose(self.head, 'down')
-        else:
-            self.execute_pose(self.head, 'way_down')'''
-            
         self.clear_octomap()
         #rospy.sleep(2)
-        pose.position.x -= 0.12
+        pose.position.x -= 0.07
         # pose.position.z = 0.13
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
-        self.execute_pose(self.head, 'head_receptionist')
+        #self.execute_pose(self.head, 'head_receptionist')
         # rospy.sleep(1)
         success = self.arm.go(wait=True)
         if success:
             self.detach_box()
             self.remove_box()
-            self.execute_pose(self.hand,'open')
+            success2 = self.execute_pose(self.hand,'open')
+            return success2
+        else:
+            self.detach_box()
+            self.remove_box()
         return success
 
     def point_pixel(self, pixel):
