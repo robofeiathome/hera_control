@@ -209,12 +209,12 @@ class Manipulator:
         self.scene.add_box(name, p, (dimensions[0], dimensions[1], dimensions[2]))
     
     def add_bookcase(self, num, height, pose):
-        largura = 0.85
+        largura = 0.88
         espessura = 0.03
-        profundidade = 0.4
+        profundidade = 0.45
 
         self.shelf_dimensions = [profundidade, largura, espessura]
-        shelves_heights = 0.1
+        shelves_heights = 0.05
         for i in range(num+1):
             self.shelf_pose = [pose.position.x, pose.position.y, shelves_heights, 0, 0, 0, 1]
             self.add_box_object("shelf{}"+format(i), self.shelf_dimensions, self.shelf_pose)
@@ -222,8 +222,8 @@ class Manipulator:
         
         self.wall_dimensions = [profundidade, espessura, height, 0, 0, 0, 1]
 
-        self.wall1_pose = [self.shelf_pose[0], self.shelf_pose[1] - self.shelf_dimensions[1]/2, height/2 , 0, 0, 0, 1]
-        self.wall2_pose = [self.shelf_pose[0], self.shelf_pose[1] + self.shelf_dimensions[1]/2, height/2 , 0, 0, 0, 1]        
+        self.wall1_pose = [self.shelf_pose[0], self.shelf_pose[1] - self.shelf_dimensions[1]/2, (height/2)+shelves_heights , 0, 0, 0, 1]
+        self.wall2_pose = [self.shelf_pose[0], self.shelf_pose[1] + self.shelf_dimensions[1]/2, (height/2)+shelves_heights , 0, 0, 0, 1]        
         self.add_box_object("wall1", self.wall_dimensions, self.wall1_pose)
         self.add_box_object("wall2", self.wall_dimensions, self.wall2_pose)
         return True
@@ -343,7 +343,7 @@ class Manipulator:
         rospy.sleep(2)
 
         self.addCylinder(self.box_name, 0.17, 0.013, (self.coordinates.x + 0.02), (self.coordinates.y + 0.04), self.coordinates.z)
-        pose.position.x -= 0.1
+        pose.position.x -= 0.11
         pose.position.y += 0.02
         # rospy.sleep(2)
 
