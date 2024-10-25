@@ -164,16 +164,18 @@ class Manipulator:
         num = request.num
         height = request.height
         self.coordinates = request.goal
+        #COLOCAR UM PARAMETRO DE DIMENSIONS E NOME DA FURNITURE!!
 
         pose = Pose(position=Point(self.coordinates.x, self.coordinates.y, self.coordinates.z), orientation=Quaternion(0.0,0.0,0.0,1.0))
 
         functions = {
-            'add_box': lambda pose=None: self.add_box_object("table", [2.0, 0.79, height], [self.coordinates.x, self.coordinates.y, self.coordinates.z, 0, 0, 0, 1], "table"),
+            'add_box': lambda pose=None: self.add_box_object("coffee_table", [2.0, 0.79, height], [self.coordinates.x, self.coordinates.y, self.coordinates.z, 0, 0, 0, 1], "coffee_table"),
+            'add_cilinder': lambda pose=None: self.add_cilinder_object('table', height, [self.coordinates.x, self.coordinates.y, self.coordinates.z], 'table'),
             'add_bookcase': lambda pose: self.add_bookcase(num, height, pose),
             'remove_all_objects': lambda pose=None: self.remove_all_objects(),
             'remove_bookcase': lambda pose=None: self.remove_bookcase(num),
             'remove_table': lambda pose=None: self.remove_table(),
-            'detach': lambda pose=None: self.detach_box()
+            'detach': lambda pose=None: self.detach_box(),
         }
 
         try:
@@ -184,7 +186,7 @@ class Manipulator:
             rospy.logerr('Invalid function name %s' % function_name)
             return "Invalid function name: {}".format(function_name)
 
-    def add_box(self):
+    '''def add_box(self):
         box_name = self.box_name
         scene = self.scene
         box_pose = PoseStamped()
@@ -193,7 +195,7 @@ class Manipulator:
         box_pose.header.frame_id = "wrist_pan_link"
         box_name = "box"
         scene.add_box(box_name, box_pose, size=(0.05, 0.05, 0.15))
-        return self.wait_for_state_update(box_is_known=True, timeout=4)
+        return self.wait_for_state_update(box_is_known=True, timeout=4)'''
     
     def add_box_object(self, name, dimensions, pose, frame="bookcase"):
         p = PoseStamped()
@@ -209,6 +211,14 @@ class Manipulator:
 
         self.scene.add_box(name, p, (dimensions[0], dimensions[1], dimensions[2]))
     
+    def add_cylinder_object(self,name,height,pose,frame='table'):
+        radius = 0.3
+        x,y,z = pose 
+        self.addCylinder(name, height, radius, x, y, z, frame)
+
+
+        
+
     def add_bookcase(self, num, height, pose):
         largura = 0.88
         espessura = 0.03
@@ -245,13 +255,13 @@ class Manipulator:
         self._objects[name] = o
         self._pub.publish(o)
  
-    def addCylinder(self, name, height, radius, x, y, z):
+    def addCylinder(self, name, height, radius, x, y, z, frame='manip_base_link'):
         s = SolidPrimitive()
         s.dimensions = [height, radius]
         s.type = s.CYLINDER
 
         ps = PoseStamped()
-        ps.header.frame_id = "manip_base_link"
+        ps.header.frame_id = frame
         ps.pose.position.x = x
         ps.pose.position.y = y
         ps.pose.position.z = z 
