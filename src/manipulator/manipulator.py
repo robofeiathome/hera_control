@@ -170,7 +170,7 @@ class Manipulator:
 
         functions = {
             'add_box': lambda pose=None: self.add_box_object("coffee_table", [2.0, 0.79, height], [self.coordinates.x, self.coordinates.y, self.coordinates.z, 0, 0, 0, 1], "coffee_table"),
-            'add_cilinder': lambda pose=None: self.add_cilinder_object('table', height, [self.coordinates.x, self.coordinates.y, self.coordinates.z], 'table'),
+            'add_cylinder': lambda pose=None: self.add_cylinder_object('table', height, [self.coordinates.x, self.coordinates.y, self.coordinates.z], 'table'),
             'add_bookcase': lambda pose: self.add_bookcase(num, height, pose),
             'remove_all_objects': lambda pose=None: self.remove_all_objects(),
             'remove_bookcase': lambda pose=None: self.remove_bookcase(num),
@@ -212,9 +212,9 @@ class Manipulator:
         self.scene.add_box(name, p, (dimensions[0], dimensions[1], dimensions[2]))
     
     def add_cylinder_object(self,name,height,pose,frame='table'):
-        radius = 0.3
+        diameter = 0.6
         x,y,z = pose 
-        self.addCylinder(name, height, radius, x, y, z, frame)
+        self.addCylinder(name, height, diameter, x, y, z, frame)
 
 
         
@@ -347,31 +347,38 @@ class Manipulator:
         self.attach_box()
         self.execute_pose(self.hand,'mid_close')
         return True
+        
+    def up(self, pose):
+        pose.position.x -= 0.1
+        pose.position.z += 0.03
+        target_pose = copy.deepcopy(pose)
+        self.arm.set_pose_target(target_pose)
+        success = self.arm.go(wait=True)
+        
+        return success
 
     def pick(self,pose):
         self.execute_pose(self.hand,'open')
         # self.execute_pose(self.head, 'down')
-        self.clear_octomap()
-        rospy.sleep(2)
 
         self.addCylinder(self.box_name, 0.17, 0.013, (self.coordinates.x + 0.02), (self.coordinates.y + 0.04), self.coordinates.z)
-        pose.position.x -= 0.10
-        pose.position.y += 0.04
+        pose.position.x -= 0.11
+        pose.position.y += 0.03
 
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
         self.execute_pose(self.head, 'way_up')
-        rospy.sleep(1)
         success = self.arm.go(wait=True)
         if success:
             # tirei o clear antes do attach, pois estava demorando muito
             # self.clear_octomap()
             # rospy.sleep(1)
             self.attach_box()
-            self.clear_octomap()
             success2 = self.execute_pose(self.hand,'hard_close')
-            # self.execute_pose(self.arm,'attack')
-            return success2
+            if self.up(pose):
+
+                # self.execute_pose(self.arm,'attack')
+                return success2
         else:
             self.detach_box()
             self.remove_box()
@@ -414,7 +421,6 @@ class Manipulator:
     
     def place_with_pose(self, pose):
 
-        self.clear_octomap()
         #rospy.sleep(2)
         pose.position.x -= 0.07
         # pose.position.z = 0.13
@@ -427,7 +433,8 @@ class Manipulator:
             self.detach_box()
             self.remove_box()
             success2 = self.execute_pose(self.hand,'open')
-            return success2
+            if self.up(pose):
+                return success2
         else:
             self.detach_box()
             self.remove_box()
