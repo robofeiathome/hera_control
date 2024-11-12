@@ -214,21 +214,19 @@ class Manipulator:
         self.scene.add_box(name, p, (dimensions[0], dimensions[1], dimensions[2]))
     
     def add_cylinder_object(self,name,height,pose,frame='table'):
-        diameter = 0.6
+        diameter = 0.9
         x,y,z = pose 
         self.addCylinder(name, height, diameter, x, y, z, frame)
-
-
         
 
     def add_bookcase(self, num, height, pose):
-        largura = 0.88
-        espessura = 0.03
+        largura = 1.03
+        espessura = 0.05
         profundidade = 0.45
-        vao = 0.05
+        vao = 0.2
 
         self.shelf_dimensions = [profundidade, largura, espessura]
-        shelves_heights = 0.08
+        shelves_heights = 0.0
         for i in range(num+1):
             self.shelf_pose = [pose.position.x, pose.position.y, shelves_heights, 0, 0, 0, 1]
             self.add_box_object("shelf{}"+format(i), self.shelf_dimensions, self.shelf_pose)
