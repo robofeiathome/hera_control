@@ -14,6 +14,8 @@ from std_srvs.srv import Empty as Empty_srv
 from shape_msgs.msg import MeshTriangle, Mesh, SolidPrimitive, Plane
 from hera_face.srv import face_list
 import math
+from threading import Thread
+
 
 
 def law_cosines(a, angle, c):
@@ -226,7 +228,7 @@ class Manipulator:
         vao = 0.05
 
         self.shelf_dimensions = [profundidade, largura, espessura]
-        shelves_heights = 0.05
+        shelves_heights = 0.08
         for i in range(num+1):
             self.shelf_pose = [pose.position.x, pose.position.y, shelves_heights, 0, 0, 0, 1]
             self.add_box_object("shelf{}"+format(i), self.shelf_dimensions, self.shelf_pose)
@@ -286,6 +288,10 @@ class Manipulator:
         scene.remove_attached_object(eef_link, name=box_name)
         return self.wait_for_state_update(box_is_known=True, box_is_attached=False, timeout=4)
 
+    def execute_pose_async(self, group, pose_name):
+        thread = Thread(target=self.execute_pose(group,pose_name))
+        thread.start()
+    
     def execute_pose(self, group, pose_name):
         group.set_named_target(pose_name)
         success = group.go(wait=True)
@@ -361,13 +367,13 @@ class Manipulator:
         self.execute_pose(self.hand,'open')
         # self.execute_pose(self.head, 'down')
 
-        self.addCylinder(self.box_name, 0.17, 0.013, (self.coordinates.x + 0.02), (self.coordinates.y + 0.04), self.coordinates.z)
+        self.addCylinder(self.box_name, 0.18, 0.013, (self.coordinates.x + 0.02), (self.coordinates.y + 0.04), self.coordinates.z)
         pose.position.x -= 0.11
         pose.position.y += 0.03
 
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
-        self.execute_pose(self.head, 'way_up')
+        self.execute_pose_async(self.head, 'way_up')
         success = self.arm.go(wait=True)
         if success:
             # tirei o clear antes do attach, pois estava demorando muito
@@ -375,11 +381,11 @@ class Manipulator:
             # rospy.sleep(1)
             self.attach_box()
             success2 = self.execute_pose(self.hand,'hard_close')
-            if self.up(pose):
+            '''if self.up(pose):
 
-                # self.execute_pose(self.arm,'attack')
-                return success2
-        else:
+                # self.execute_pose(self.arm,'attack')'''
+            return success2
+        else:   
             self.detach_box()
             self.remove_box()
         return success
@@ -422,7 +428,7 @@ class Manipulator:
     def place_with_pose(self, pose):
 
         #rospy.sleep(2)
-        pose.position.x -= 0.07
+        pose.position.x -= 0.06
         # pose.position.z = 0.13
         target_pose = copy.deepcopy(pose)
         self.arm.set_pose_target(target_pose)
@@ -438,6 +444,7 @@ class Manipulator:
         else:
             self.detach_box()
             self.remove_box()
+
         return success
 
     def point_pixel(self, pixel):
