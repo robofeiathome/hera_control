@@ -420,7 +420,7 @@ class Manipulator:
         if success:
             self.detach_box()
             self.remove_box()
-            self.execute_pose(self.hand,'open')
+            
         return success
     
     def place_with_pose(self, pose):
