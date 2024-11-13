@@ -436,7 +436,6 @@ class Manipulator:
         if success:
             self.detach_box()
             self.remove_box()
-            success2 = self.execute_pose(self.hand,'open')
             if self.up(pose):
                 return success2
         else:
