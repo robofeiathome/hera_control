@@ -198,7 +198,7 @@ class Manipulator:
         box_name = "box"
         scene.add_box(box_name, box_pose, size=(0.05, 0.05, 0.15))
         return self.wait_for_state_update(box_is_known=True, timeout=4)'''
-    
+    ########AAAAAAAAAAAAAAQUIII
     def add_box_object(self, name, dimensions, pose, frame="bookcase"):
         p = PoseStamped()
         p.header.frame_id = frame
@@ -220,13 +220,13 @@ class Manipulator:
         
 
     def add_bookcase(self, num, height, pose):
-        largura = 1.03
-        espessura = 0.05
+        largura = 1.05
+        espessura = 0.04
         profundidade = 0.45
-        vao = 0.2
+        vao = 0.00
 
         self.shelf_dimensions = [profundidade, largura, espessura]
-        shelves_heights = 0.0
+        shelves_heights = -0.05
         for i in range(num+1):
             self.shelf_pose = [pose.position.x, pose.position.y, shelves_heights, 0, 0, 0, 1]
             self.add_box_object("shelf{}"+format(i), self.shelf_dimensions, self.shelf_pose)
