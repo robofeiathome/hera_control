@@ -1,6 +1,7 @@
 string type
+string furniture_tf
 int32 num
-float64 height
+float64[] dimensions
 Manip_Goal goal
 ---
 string result

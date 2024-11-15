@@ -163,20 +163,21 @@ class Manipulator:
         
     def adding_furniture(self, request):
         function_name = request.type
+        furniture_tf = furniture_tf
         num = request.num
-        height = request.height
+        lenght, width, height  = request.dimensions
         self.coordinates = request.goal
-        #COLOCAR UM PARAMETRO DE DIMENSIONS E NOME DA FURNITURE!!
+        
 
         pose = Pose(position=Point(self.coordinates.x, self.coordinates.y, self.coordinates.z), orientation=Quaternion(0.0,0.0,0.0,1.0))
 
         functions = {
-            'add_box': lambda pose=None: self.add_box_object("coffee_table", [2.0, 0.79, height], [self.coordinates.x, self.coordinates.y, self.coordinates.z, 0, 0, 0, 1], "coffee_table"),
-            'add_cylinder': lambda pose=None: self.add_cylinder_object('table', height, [self.coordinates.x, self.coordinates.y, self.coordinates.z], 'table'),
-            'add_bookcase': lambda pose: self.add_bookcase(num, height, pose),
+            'add_box': lambda pose=None: self.add_box_object(furniture_tf, [lenght, width, height], [self.coordinates.x, self.coordinates.y, self.coordinates.z, 0, 0, 0, 1]),
+            'add_cylinder': lambda pose=None: self.add_cylinder_object(furniture_tf, height, lenght, [self.coordinates.x, self.coordinates.y, self.coordinates.z]),
+            'add_bookcase': lambda pose: self.add_bookcase(num, [lenght,width,height], pose),
             'remove_all_objects': lambda pose=None: self.remove_all_objects(),
             'remove_bookcase': lambda pose=None: self.remove_bookcase(num),
-            'remove_table': lambda pose=None: self.remove_table(),
+            'remove_object': lambda pose=None: self.remove_object(),
             'detach': lambda pose=None: self.detach_box(),
         }
 
@@ -188,18 +189,8 @@ class Manipulator:
             rospy.logerr('Invalid function name %s' % function_name)
             return "Invalid function name: {}".format(function_name)
 
-    '''def add_box(self):
-        box_name = self.box_name
-        scene = self.scene
-        box_pose = PoseStamped()
-        box_pose.pose.orientation.w = 1.0
-        box_pose.pose.position.x = 0.2
-        box_pose.header.frame_id = "wrist_pan_link"
-        box_name = "box"
-        scene.add_box(box_name, box_pose, size=(0.05, 0.05, 0.15))
-        return self.wait_for_state_update(box_is_known=True, timeout=4)'''
     ########AAAAAAAAAAAAAAQUIII
-    def add_box_object(self, name, dimensions, pose, frame="bookcase"):
+    def add_box_object(self,frame='cabinet', dimensions, pose):
         p = PoseStamped()
         p.header.frame_id = frame
         p.header.stamp = rospy.Time.now()
@@ -211,12 +202,12 @@ class Manipulator:
         p.pose.orientation.z = pose[5]
         p.pose.orientation.w = pose[6]
 
-        self.scene.add_box(name, p, (dimensions[0], dimensions[1], dimensions[2]))
+        self.scene.add_box(frame, p, (dimensions[0], dimensions[1], dimensions[2]))
     
-    def add_cylinder_object(self,name,height,pose,frame='table'):
-        diameter = 0.9
+    def add_cylinder_object(self,frame='table',height,lenght,pose):
+        #diameter = 0.9
         x,y,z = pose 
-        self.addCylinder(name, height, diameter, x, y, z, frame)
+        self.addCylinder(height, lenght, x, y, z,frame)
         
 
     def add_bookcase(self, num, height, pose):
@@ -240,18 +231,18 @@ class Manipulator:
         self.add_box_object("wall2", self.wall_dimensions, self.wall2_pose)
         return True
     
-    def makeSolidPrimitive(self, name, solid, pose):
+    def makeSolidPrimitive(self, name, solid, pose,frame):
         o = CollisionObject()
         o.header.stamp = rospy.Time.now()
-        o.header.frame_id = "manip_base_link"
+        o.header.frame_id = frame
         o.id = name
         o.primitives.append(solid)
         o.primitive_poses.append(pose)
         o.operation = o.ADD
         return o
     
-    def addSolidPrimitive(self, name, solid, pose):
-        o = self.makeSolidPrimitive(name, solid, pose)
+    def addSolidPrimitive(self, name, solid, pose,frame):
+        o = self.makeSolidPrimitive(name, solid, pose,frame)
         self._objects[name] = o
         self._pub.publish(o)
  
@@ -267,7 +258,7 @@ class Manipulator:
         ps.pose.position.z = z 
         ps.pose.orientation.w = 1.0
 
-        self.addSolidPrimitive(name, s, ps.pose)
+        self.addSolidPrimitive(name, s, ps.pose,frame)
     
     def attach_box(self):
         box_name = self.box_name
@@ -474,21 +465,20 @@ class Manipulator:
         scene.remove_world_object(box_name)
         return self.wait_for_state_update(box_is_attached=False, box_is_known=False, timeout=4)
 
-    def remove_bookcase(self, num):
+    def remove_object(self, obj):
+        self.scene.remove_world_object(obj)
+        return True
+
+    def remove_bookcase(self, num=5):
         for i in range(num+1):
             self.scene.remove_world_object("shelf{}"+format(i))
             
-        self.scene.remove_world_object("cabinet")    
+        self.scene.remove_world_object("bookcase")    
         self.scene.remove_world_object("wall1")
         self.scene.remove_world_object("wall2")
         return True
     
-    def remove_table(self):
-
-        self.scene.remove_world_object("table")
-        return True
-    
-    def remove_all_objects(self):
+    def remove_all_objects(self,):
         self.scene.clear()
         return True
     
