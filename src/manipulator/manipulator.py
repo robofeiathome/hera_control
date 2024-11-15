@@ -95,7 +95,7 @@ class Manipulator:
             'open': lambda pose=None: self.execute_pose(self.hand,'open'),
             'close': lambda pose=None: self.execute_pose(self.hand,'hard_close'),
             'serve_close': lambda pose=None: self.execute_pose(self.hand,'serve_close'),
-            'soft_close': lambda pose=None: self.execute_pose(self.hand,'soft_close'),
+            'sofft_close': lambda pose=None: self.execute_pose(self.hand,'soft_close'),
             'ground': lambda pose=None: self.execute_pose(self.head,'ground'),
             'look_for_person': lambda pose=None: self.look_for_person(function_name),
             'bottom_shelf': lambda pose=None: self.execute_pose(self.arm,'place_bottom_shelf'),
@@ -107,6 +107,8 @@ class Manipulator:
             'head_down': lambda pose=None: self.execute_pose(self.head,'down'),
             'head_receptionist': lambda pose=None: self.execute_pose(self.head,'head_receptionist'),
             'head_stickler': lambda pose=None: self.execute_pose(self.head,'head_stickler'),
+            'head_room': lambda pose=None: self.execute_pose(self.head,'head_room'),
+            'take_OUT': lambda pose=None: self.execute_pose(self.arm,'take_OUT'),
             'way_down': lambda pose=None: self.execute_pose(self.head,'way_down'),
             'serving_right': lambda pose=None: self.serving('right'),
             'serving_cereal_right': lambda pose=None: self.serving_cereal('right'),
@@ -317,7 +319,7 @@ class Manipulator:
     def look_for_person(self, name):
         self.move_joint(10, 0.0)
 
-        MOTOR_POSITIONS = [0.0, 0.3, -0.3]
+        MOTOR_POSITIONS = [0.0, -0.5, 0.5]
         person_found = False
 
         i = 0
@@ -427,8 +429,8 @@ class Manipulator:
         if success:
             self.detach_box()
             self.remove_box()
-            if self.up(pose):
-                return success2
+            '''if self.up(pose):
+                return success2'''
         else:
             self.detach_box()
             self.remove_box()
