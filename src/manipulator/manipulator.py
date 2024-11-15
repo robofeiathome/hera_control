@@ -165,7 +165,7 @@ class Manipulator:
         
     def adding_furniture(self, request):
         function_name = request.type
-        furniture_tf = furniture_tf
+        furniture_tf = request.furniture_tf
         num = request.num
         lenght, width, height  = request.dimensions
         self.coordinates = request.goal
@@ -174,8 +174,8 @@ class Manipulator:
         pose = Pose(position=Point(self.coordinates.x, self.coordinates.y, self.coordinates.z), orientation=Quaternion(0.0,0.0,0.0,1.0))
 
         functions = {
-            'add_box': lambda pose=None: self.add_box_object(furniture_tf, [lenght, width, height], [self.coordinates.x, self.coordinates.y, self.coordinates.z, 0, 0, 0, 1]),
-            'add_cylinder': lambda pose=None: self.add_cylinder_object(furniture_tf, height, lenght, [self.coordinates.x, self.coordinates.y, self.coordinates.z]),
+            'add_box': lambda pose=None: self.add_box_object([lenght, width, height], [self.coordinates.x, self.coordinates.y, self.coordinates.z, 0, 0, 0, 1],furniture_tf),
+            'add_cylinder': lambda pose=None: self.add_cylinder_object(height, lenght, [self.coordinates.x, self.coordinates.y, self.coordinates.z],furniture_tf),
             'add_bookcase': lambda pose: self.add_bookcase(num, [lenght,width,height], pose),
             'remove_all_objects': lambda pose=None: self.remove_all_objects(),
             'remove_bookcase': lambda pose=None: self.remove_bookcase(num),
@@ -192,7 +192,7 @@ class Manipulator:
             return "Invalid function name: {}".format(function_name)
 
     ########AAAAAAAAAAAAAAQUIII
-    def add_box_object(self,frame='cabinet', dimensions, pose):
+    def add_box_object(self, dimensions, pose,frame='cabinet'):
         p = PoseStamped()
         p.header.frame_id = frame
         p.header.stamp = rospy.Time.now()
@@ -204,9 +204,9 @@ class Manipulator:
         p.pose.orientation.z = pose[5]
         p.pose.orientation.w = pose[6]
 
-        self.scene.add_box(frame, p, (dimensions[0], dimensions[1], dimensions[2]))
+        self.scene.add_box(frame, p, (dimensions[0], dimensions[1], dimensions[2]/2))
     
-    def add_cylinder_object(self,frame='table',height,lenght,pose):
+    def add_cylinder_object(self,height,lenght,pose,frame='table'):
         #diameter = 0.9
         x,y,z = pose 
         self.addCylinder(height, lenght, x, y, z,frame)
