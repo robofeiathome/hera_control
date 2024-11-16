@@ -176,10 +176,11 @@ class Manipulator:
         functions = {
             'add_box': lambda pose=None: self.add_box_object([lenght, width, height], [self.coordinates.x, self.coordinates.y, self.coordinates.z, 0, 0, 0, 1],furniture_tf),
             'add_cylinder': lambda pose=None: self.add_cylinder_object(height, lenght, [self.coordinates.x, self.coordinates.y, self.coordinates.z],furniture_tf),
-            'add_bookcase': lambda pose: self.add_bookcase(num, [lenght,width,height], pose),
+            'add_bookcase': lambda pose: self.add_bookcase(num, lenght, width, height, pose),
+            'add_couch': lambda pose: self.add_couch([lenght,width,height],[self.coordinates.x, self.coordinates.y, self.coordinates.z, 0, 0, 0, 1],furniture_tf)
             'remove_all_objects': lambda pose=None: self.remove_all_objects(),
             'remove_bookcase': lambda pose=None: self.remove_bookcase(num),
-            'remove_object': lambda pose=None: self.remove_object(),
+            'remove_object': lambda pose=None: self.remove_object(furniture_tf),
             'detach': lambda pose=None: self.detach_box(),
         }
 
@@ -205,20 +206,22 @@ class Manipulator:
         p.pose.orientation.w = pose[6]
 
         self.scene.add_box(frame, p, (dimensions[0], dimensions[1], dimensions[2]/2))
+        return True
     
     def add_cylinder_object(self,height,lenght,pose,frame='table'):
         #diameter = 0.9
         x,y,z = pose 
         self.addCylinder(height, lenght, x, y, z,frame)
+        return True
         
 
-    def add_bookcase(self, num, height, pose):
+    def add_bookcase(self, num, lenght, width, height, pose):
         largura = 1.05
         espessura = 0.04
         profundidade = 0.45
         vao = 0.00
 
-        self.shelf_dimensions = [profundidade, largura, espessura]
+        self.shelf_dimensions = [lenght, width, espessura]
         shelves_heights = -0.05
         for i in range(num+1):
             self.shelf_pose = [pose.position.x, pose.position.y, shelves_heights, 0, 0, 0, 1]
@@ -232,7 +235,26 @@ class Manipulator:
         self.add_box_object("wall1", self.wall_dimensions, self.wall1_pose)
         self.add_box_object("wall2", self.wall_dimensions, self.wall2_pose)
         return True
-    
+
+    def add_couch(self, dimensions,pose,furniture_tf='couch'):
+        seat_height = 0.42
+        thickness = 0.13
+        
+        self.add_box_object([dimensions[0],dimensions[1],seat_height],pose,furniture_tf)
+
+        arm_dimensions = [dimensions[0], thickness, height, 0, 0, 0, 1]
+        backrest_dimensions = [thickness,lenght,height,0,0,0,1]
+
+        arm1_pose = [pose[0], pose[1] - dimensions[1]/2, (height/2), 0, 0, 0, 1]
+        arm2_pose = [pose[0], pose[1] + dimensions[1]/2, (height/2), 0, 0, 0, 1]
+        backrest_pose = [pose[0]+dimensions[0]/2,pose[1],pose[2]] 
+
+        self.add_box_object('arm1', arm_dimensions, arm1_pose)
+        self.add_box_object('arm2', arm_dimensions, arm2_pose)
+        self.add_box_object('backrest',backrest_dimensions, backrest_pose)
+        return True
+        
+
     def makeSolidPrimitive(self, name, solid, pose,frame):
         o = CollisionObject()
         o.header.stamp = rospy.Time.now()
@@ -467,7 +489,7 @@ class Manipulator:
         scene.remove_world_object(box_name)
         return self.wait_for_state_update(box_is_attached=False, box_is_known=False, timeout=4)
 
-    def remove_object(self, obj):
+    def remove_object(self, obj='box'):
         self.scene.remove_world_object(obj)
         return True
 
