@@ -72,10 +72,11 @@ class Manipulator:
         self.tf = tf.TransformListener()
         self.tf.waitForTransform('manip_base_link', 'torso', rospy.Time(), rospy.Duration(1.0))
 
+        
         self.execute_pose(self.head,'up')
         self.execute_pose(self.arm,'home')
         self.execute_pose(self.hand,'open')
- 
+        
 
         self.box_name = "box"
         self.eef_link = self.arm.get_end_effector_link()
@@ -111,6 +112,10 @@ class Manipulator:
             'take_OUT': lambda pose=None: self.execute_pose(self.arm,'take_OUT'),
             'way_down': lambda pose=None: self.execute_pose(self.head,'way_down'),
             'serving_right': lambda pose=None: self.serving('right'),
+            'mid_close': lambda pose=None: self.execute_pose(self.hand,'mid_close'),
+            'bengala_pose': lambda pose=None: self.execute_pose(self.arm,'bengala_pose'),
+            'bengala_pose2': lambda pose=None: self.execute_pose(self.arm,'bengala_pose2'),
+            'bengala_hold': lambda pose=None: self.execute_pose(self.arm,'bengala_hold'),
             'serving_cereal_right': lambda pose=None: self.serving_cereal('right'),
             'serving_cereal_left': lambda pose=None: self.serving_cereal('left'),
             'serving_left': lambda pose=None: self.serving('left'),
@@ -167,17 +172,20 @@ class Manipulator:
         function_name = request.type
         furniture_tf = request.furniture_tf
         num = request.num
-        lenght, width, height  = request.dimensions
+        dimensions  = request.dimensions
+        width = dimensions[0]
+        lenght = dimensions[1]
+        height = dimensions[2]
         self.coordinates = request.goal
         
 
         pose = Pose(position=Point(self.coordinates.x, self.coordinates.y, self.coordinates.z), orientation=Quaternion(0.0,0.0,0.0,1.0))
 
         functions = {
-            'add_box': lambda pose=None: self.add_box_object([lenght, width, height], [self.coordinates.x, self.coordinates.y, self.coordinates.z, 0, 0, 0, 1],furniture_tf),
+            'add_box': lambda pose=None: self.add_box_object([lenght, width, height], [self.coordinates.x, self.coordinates.y, self.coordinates.z, 0, 0, 0, 1],furniture_tf, furniture_tf),
             'add_cylinder': lambda pose=None: self.add_cylinder_object(height, lenght, [self.coordinates.x, self.coordinates.y, self.coordinates.z],furniture_tf),
-            'add_bookcase': lambda pose: self.add_bookcase(num, lenght, width, height, pose),
-            'add_couch': lambda pose: self.add_couch([lenght,width,height],[self.coordinates.x, self.coordinates.y, self.coordinates.z, 0, 0, 0, 1],furniture_tf)
+            'add_bookcase': lambda pose: self.add_bookcase(num, lenght, width, height,[self.coordinates.x, self.coordinates.y, self.coordinates.z, 0, 0, 0, 1]),
+            'add_couch': lambda pose: self.add_couch([lenght,width,height],[self.coordinates.x, self.coordinates.y, self.coordinates.z, 0, 0, 0, 1],furniture_tf),
             'remove_all_objects': lambda pose=None: self.remove_all_objects(),
             'remove_bookcase': lambda pose=None: self.remove_bookcase(num),
             'remove_object': lambda pose=None: self.remove_object(furniture_tf),
@@ -192,8 +200,7 @@ class Manipulator:
             rospy.logerr('Invalid function name %s' % function_name)
             return "Invalid function name: {}".format(function_name)
 
-    ########AAAAAAAAAAAAAAQUIII
-    def add_box_object(self, dimensions, pose,frame='cabinet'):
+    def add_box_object(self,dimensions,pose,name='box',frame='bookcase'):
         p = PoseStamped()
         p.header.frame_id = frame
         p.header.stamp = rospy.Time.now()
@@ -205,7 +212,7 @@ class Manipulator:
         p.pose.orientation.z = pose[5]
         p.pose.orientation.w = pose[6]
 
-        self.scene.add_box(frame, p, (dimensions[0], dimensions[1], dimensions[2]/2))
+        self.scene.add_box(name, p, (dimensions[0], dimensions[1], dimensions[2]/2))
         return True
     
     def add_cylinder_object(self,height,lenght,pose,frame='table'):
@@ -216,24 +223,22 @@ class Manipulator:
         
 
     def add_bookcase(self, num, lenght, width, height, pose):
-        largura = 1.05
-        espessura = 0.04
-        profundidade = 0.45
-        vao = 0.00
+        espessura = 0.05
+        vao = 0.05
 
-        self.shelf_dimensions = [lenght, width, espessura]
-        shelves_heights = -0.05
+        self.shelf_dimensions = [width, lenght, espessura]
+        shelves_heights = 0.05
         for i in range(num+1):
-            self.shelf_pose = [pose.position.x, pose.position.y, shelves_heights, 0, 0, 0, 1]
-            self.add_box_object("shelf{}"+format(i), self.shelf_dimensions, self.shelf_pose)
+            self.shelf_pose = [pose[0], pose[1], shelves_heights, 0, 0, 0, 1]
+            self.add_box_object(self.shelf_dimensions, self.shelf_pose,f'shelf{i}')
             shelves_heights += (height/num)
         
-        self.wall_dimensions = [profundidade, espessura, height, 0, 0, 0, 1]
+        self.wall_dimensions = [width, espessura, height, 0, 0, 0, 1]
 
         self.wall1_pose = [self.shelf_pose[0], self.shelf_pose[1] - self.shelf_dimensions[1]/2, (height/2)+vao , 0, 0, 0, 1]
         self.wall2_pose = [self.shelf_pose[0], self.shelf_pose[1] + self.shelf_dimensions[1]/2, (height/2)+vao , 0, 0, 0, 1]        
-        self.add_box_object("wall1", self.wall_dimensions, self.wall1_pose)
-        self.add_box_object("wall2", self.wall_dimensions, self.wall2_pose)
+        self.add_box_object(self.wall_dimensions, self.wall1_pose,'wall1')
+        self.add_box_object(self.wall_dimensions, self.wall2_pose,'wall2')
         return True
 
     def add_couch(self, dimensions,pose,furniture_tf='couch'):
@@ -380,7 +385,7 @@ class Manipulator:
         self.execute_pose(self.hand,'open')
         # self.execute_pose(self.head, 'down')
 
-        self.addCylinder(self.box_name, 0.18, 0.013, (self.coordinates.x + 0.02), (self.coordinates.y + 0.04), self.coordinates.z)
+        self.addCylinder(self.box_name, 0.18, 0.016, (self.coordinates.x + 0.02), (self.coordinates.y + 0.04), self.coordinates.z)
         pose.position.x -= 0.11
         pose.position.y += 0.03
 
@@ -502,7 +507,7 @@ class Manipulator:
         self.scene.remove_world_object("wall2")
         return True
     
-    def remove_all_objects(self,):
+    def remove_all_objects(self):
         self.scene.clear()
         return True
     
